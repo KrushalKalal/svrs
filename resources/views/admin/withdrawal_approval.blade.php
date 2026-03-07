@@ -1,0 +1,188 @@
+@extends('admin.layout.main-layout')
+@section('title', config('app.name') . ' || Withdrawal Approval')
+@section('content')
+    <div class="content">
+        <div class="container-fluid">
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4>Withdrawal Approval</h4>
+                </div>
+                <div class="card-body table-responsive">
+                    <table class="table table-bordered" id="WithdrawalTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Member</th>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Remark</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($transactions as $txn)
+                                <tr>
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td>
+                                        {{ $txn->user->first_name ?? '' }} {{ $txn->user->last_name ?? '' }}
+                                        <br>
+                                        {{ $txn->user->mobile ?? '' }}
+                                        <br>
+                                        {{ $txn->user->member_code ?? '' }}
+                                    </td>
+                                    <td>{{ $txn->created_at->format('d M Y h:i A') }}</td>
+                                    <td>
+                                        @if ($txn->type == 'credit')
+                                            <span class="badge bg-success">Credit</span>
+                                        @else
+                                            <span class="badge bg-danger">Debit</span>
+                                        @endif
+                                    </td>
+                                    <td>₹{{ number_format($txn->amount, 2) }}</td>
+                                    <td>
+                                        @if ($txn->status === 1)
+                                            <span class="badge bg-success">Approved</span>
+                                        @elseif ($txn->status === 0)
+                                            <span class="badge bg-danger">Rejected</span>
+                                        @else
+                                            <span class="badge bg-warning">Pending</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $txn->remark }}</td>
+                                    <td>
+                                        @if ($txn->invoice)
+                                            <a href="{{ asset($txn->invoice) }}" target="_blank"
+                                                class="btn btn-sm btn-info">
+                                                <i class="fa fa-eye"></i>
+                                            </a>
+                                        @endif
+                                        @if ($txn->status === 2)
+                                            <button class="btn btn-sm btn-success change-status"
+                                                data-id="{{ $txn->id }}" data-status="1">
+                                                <i class="fa fa-check"></i>
+                                            </button>
+
+                                            <button class="btn btn-sm btn-danger change-status"
+                                                data-id="{{ $txn->id }}" data-status="0">
+                                                <i class="fa fa-ban"></i>
+                                            </button>
+                                        @else
+                                            <span class="text-muted">No Action</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).on('click', '.change-status', function() {
+
+            let button = $(this);
+            let id = button.data('id');
+            let status = button.data('status');
+
+            let actionText = status == 1 ? 'Approve' : 'Reject';
+
+            // ✅ If Approving → Ask for Amount
+            if (status == 1) {
+
+                Swal.fire({
+                    title: 'Approve Withdrawal',
+                    text: 'Enter Approved Amount',
+                    input: 'number',
+                    inputPlaceholder: 'Enter Amount',
+                    inputAttributes: {
+                        min: 1,
+                        step: '0.01'
+                    },
+                    showCancelButton: true,
+                    confirmButtonText: 'Submit & Approve',
+                    confirmButtonColor: '#28a745',
+                    showLoaderOnConfirm: true,
+
+                    preConfirm: (amount) => {
+
+                        // ✅ Validate Amount (FIXED)
+                        if (!amount || amount <= 0) {
+                            Swal.showValidationMessage('Valid amount is required');
+                            return false;
+                        }
+
+                        // ✅ AJAX Call
+                        return $.ajax({
+                            url: "{{ route('admin.withdrawal.change.status') }}",
+                            type: "POST",
+                            data: {
+                                _token: "{{ csrf_token() }}",
+                                id: id,
+                                status: status,
+                                amount: amount
+                            }
+                        }).then(response => {
+
+                            if (!response.success) {
+                                throw new Error(response.message);
+                            }
+
+                            return response;
+
+                        }).catch(error => {
+                            Swal.showValidationMessage(
+                                error.responseJSON?.message || error.message
+                            );
+                        });
+                    }
+
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire('Success!', result.value.message, 'success')
+                            .then(() => location.reload());
+                    }
+                });
+
+            } else {
+
+                // ❌ Reject Flow
+                Swal.fire({
+                    title: 'Reject Transaction?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    confirmButtonText: 'Yes, Reject'
+                }).then((result) => {
+
+                    if (result.isConfirmed) {
+
+                        $.post("{{ route('admin.withdrawal.change.status') }}", {
+                            _token: "{{ csrf_token() }}",
+                            id: id,
+                            status: status
+                        }, function(res) {
+
+                            if (res.success) {
+                                Swal.fire('Rejected!', res.message, 'success')
+                                    .then(() => location.reload());
+                            } else {
+                                Swal.fire('Error!', res.message, 'error');
+                            }
+
+                        });
+
+                    }
+                });
+            }
+
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            let table = $('#WithdrawalTable').DataTable();
+        });
+    </script>
+@endsection
