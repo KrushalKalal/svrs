@@ -38,7 +38,7 @@
                                         @if ($trade->type == 'buy')
                                             <span class="badge bg-success">BUY</span>
                                         @else
-                                            <span class="badge bg-danger">SELL</span>
+                                            <span class="badge bg-info">REWARD</span>
                                         @endif
                                     </td>
 
@@ -58,7 +58,7 @@
         </div>
     </div>
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             let table = $('#HistoryTable').DataTable();
         });
     </script>

@@ -32,14 +32,13 @@
                             <i class="ti ti-maximize"></i>
                         </a>
                     </div>
-                    
+
                     <div class="dropdown profile-dropdown">
                         <a href="javascript:void(0);" class="dropdown-toggle d-flex align-items-center"
                             data-bs-toggle="dropdown">
                             <span class="avatar avatar-sm online">
                                 <?php if(auth()->user()->profile_image): ?>
-                                    <img src="<?php echo e(asset(auth()->user()->profile_image)); ?>"
-                                        class="img-fluid rounded-circle">
+                                    <img src="<?php echo e(asset(auth()->user()->profile_image)); ?>" class="img-fluid rounded-circle">
                                 <?php else: ?>
                                     <i class="ti ti-user fs-16 text-black"></i>
                                 <?php endif; ?>
@@ -51,23 +50,27 @@
                                     <div class="d-flex align-items-center">
                                         <span class="avatar avatar-lg me-2 avatar-rounded">
                                             <?php if(auth()->user()->profile_image): ?>
-                                                <img src="<?php echo e(asset(auth()->user()->profile_image)); ?>" alt="img">                                                
+                                                <img src="<?php echo e(asset(auth()->user()->profile_image)); ?>" alt="img">
                                             <?php else: ?>
                                                 <i class="ti ti-user fs-16 text-black"></i>
                                             <?php endif; ?>
                                         </span>
                                         <div>
-                                            <h6 class="mb-0"><?php echo e(auth()->user()->first_name); ?>-<?php echo e(auth()->user()->last_name); ?></h6>
+                                            <h6 class="mb-0">
+                                                <?php echo e(auth()->user()->first_name); ?>-<?php echo e(auth()->user()->last_name); ?>
+
+                                            </h6>
                                             <p class="fs-12 fw-medium mb-0"><?php echo e(auth()->user()->email); ?></p>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="card-body">
                                     <a class="dropdown-item d-inline-flex align-items-center p-0 py-2"
-                                        href="<?php echo e(route('admin.profile')); ?>">
+                                        href="<?php echo e(auth()->user()->role === 'member' ? route('member.profile') : route('admin.profile')); ?>">
                                         <i class="ti ti-user-circle me-1"></i>My Profile
                                     </a>
-                                    <a class="dropdown-item d-inline-flex align-items-center p-0 py-2" href="<?php echo e(route('admin.logout')); ?>">
+                                    <a class="dropdown-item d-inline-flex align-items-center p-0 py-2"
+                                        href="<?php echo e(auth()->user()->role === 'member' ? route('member.logout') : route('admin.logout')); ?>">
                                         <i class="ti ti-login me-2"></i>Logout
                                     </a>
                                 </div>
@@ -85,8 +88,14 @@
                 <i class="fa fa-ellipsis-v"></i>
             </a>
             <div class="dropdown-menu dropdown-menu-end">
-                <a class="dropdown-item" href="<?php echo e(route('admin.profile')); ?>">My Profile</a>
-                <a class="dropdown-item" href="<?php echo e(route('admin.logout')); ?>">Logout</a>
+                <a class="dropdown-item d-inline-flex align-items-center p-0 py-2"
+                    href="<?php echo e(auth()->user()->role === 'member' ? route('member.profile') : route('admin.profile')); ?>">
+                    My Profile
+                </a>
+                <a class="dropdown-item"
+                    href="<?php echo e(auth()->user()->role === 'member' ? route('member.logout') : route('admin.logout')); ?>">
+                    Logout
+                </a>
             </div>
         </div>
         <!-- /Mobile Menu -->
@@ -94,5 +103,4 @@
     </div>
 
 </div>
-<!-- /Header -->
-<?php /**PATH D:\Qubeta\svrs\resources\views/admin/layout/header.blade.php ENDPATH**/ ?>
+<!-- /Header --><?php /**PATH D:\Qubeta\svrs\resources\views/admin/layout/header.blade.php ENDPATH**/ ?>

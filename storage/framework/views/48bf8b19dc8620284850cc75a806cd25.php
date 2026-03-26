@@ -48,8 +48,7 @@
                             <?php echo csrf_field(); ?>
                             <div class="form-group">
                                 <label>Email<span>*</span> </label>
-                                <input type="email" class="form-control" name="email"
-                                    placeholder="example@gmail.com">
+                                <input type="email" class="form-control" name="email" placeholder="example@gmail.com">
                                 <span class="text-danger error-email"></span>
                             </div>
                             <div class="form-group mb-3">
@@ -93,7 +92,7 @@
     <script src="<?php echo e(asset('front/app/js/mouse.js')); ?>"></script>
 </body>
 <script>
-    $(document).on('click', '.toggle-password', function() {
+    $(document).on('click', '.toggle-password', function () {
 
         let input = $(this).closest('.input-group').find('input');
         let icon = $(this).find('i');
@@ -108,9 +107,9 @@
     });
 </script>
 <script>
-    $(document).ready(function() {
+    $(document).ready(function () {
 
-        $("#adminLoginForm").on('submit', function(e) {
+        $("#adminLoginForm").on('submit', function (e) {
             e.preventDefault();
 
             // Reset errors
@@ -152,15 +151,15 @@
                 url: "<?php echo e(route('admin.login.submit')); ?>",
                 type: "POST",
                 data: formData,
-                success: function(response) {
+                success: function (response) {
                     if (response.status === true) {
                         toastr.success("Login successful!");
-                        window.location.href = "<?php echo e(route('admin.dashboard')); ?>";
+                        window.location.href = response.redirect_url;
                     } else {
                         toastr.error(response.message ?? "Something went wrong!");
                     }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
 
                     if (xhr.status === 422) {
                         let errors = xhr.responseJSON.errors;
@@ -181,7 +180,7 @@
                         toastr.error("Login failed, try again.");
                     }
                 },
-                complete: function() {
+                complete: function () {
                     $("#loginBtn .btn-text").removeClass("d-none");
                     $("#loginBtn .btn-spinner").addClass("d-none");
                     $("#loginBtn").prop("disabled", false);
@@ -192,5 +191,4 @@
     });
 </script>
 
-</html>
-<?php /**PATH D:\Qubeta\svrs\resources\views/admin/auth/login.blade.php ENDPATH**/ ?>
+</html><?php /**PATH D:\Qubeta\svrs\resources\views/admin/auth/login.blade.php ENDPATH**/ ?>

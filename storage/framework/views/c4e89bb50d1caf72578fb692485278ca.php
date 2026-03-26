@@ -1,4 +1,3 @@
-
 <?php $__env->startSection('title', config('app.name') . ' || Members List'); ?>
 <?php $__env->startSection('content'); ?>
     <div class="content">
@@ -90,7 +89,8 @@
                                                     data-id="<?php echo e($items->id); ?>" data-status="0">
                                                     <i class="fa fa-ban"></i>
                                                 </button>
-                                                <?php if($items->bankDetail): ?>                                                    
+                                                <?php if($items->bankDetail): ?>
+                                                    
                                                     <a href="<?php echo e(route('admin.member.bankdetails', $items->bankDetail->id)); ?>" class="btn btn-sm btn-info">
                                                         <i class="fa fa-eye"></i>
                                                     </a>
@@ -126,6 +126,7 @@
                 if (result.isConfirmed) {
                     button.prop('disabled', true).text('Updating...');
                     $.ajax({
+                        
                         url: "<?php echo e(route('admin.member.update.status')); ?>",
                         type: "POST",
                         data: {
@@ -135,15 +136,11 @@
                         },
                         success: function(res) {
                             if (res.success) {
-
                                 let badge = $('#row_' + id).find('.status-badge');
-
                                 if (status == 1) {
-                                    badge.removeClass().addClass(
-                                        'badge bg-success status-badge').text('Active');
+                                    badge.removeClass().addClass('badge bg-success status-badge').text('Active');
                                 } else {
-                                    badge.removeClass().addClass('badge bg-danger status-badge')
-                                        .text('Inactive');
+                                    badge.removeClass().addClass('badge bg-danger status-badge').text('Inactive');
                                 }
                                 Swal.fire({
                                     title: 'Updated!',
@@ -153,7 +150,6 @@
                                 }).then(() => {
                                     location.reload();
                                 });
-
                             } else {
                                 Swal.fire('Error!', res.message, 'error');
                             }
@@ -162,11 +158,9 @@
                             Swal.fire('Error!', 'Something went wrong!', 'error');
                         },
                         complete: function() {
-                            button.prop('disabled', false)
-                                .text(status == 1 ? 'Activate' : 'Inactivate');
+                            button.prop('disabled', false).text(status == 1 ? 'Activate' : 'Inactivate');
                         }
                     });
-
                 }
             });
         });
@@ -177,5 +171,4 @@
         });
     </script>
 <?php $__env->stopSection(); ?>
-
 <?php echo $__env->make('admin.layout.main-layout', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\Qubeta\svrs\resources\views/admin/members/member_list.blade.php ENDPATH**/ ?>

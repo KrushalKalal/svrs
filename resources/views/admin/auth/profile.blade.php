@@ -2,6 +2,14 @@
 
 @section('title', config('app.name') . ' || Profile')
 
+@php
+    $isAdmin = auth()->user()->role === 'admin';
+    $profileUpdateRoute = $isAdmin ? route('admin.profile.update') : route('member.profile.update');
+    $bankDetailsRoute = $isAdmin ? route('admin.bank.details') : route('member.bank.details');
+    $passwordUpdateRoute = $isAdmin ? route('admin.password.update') : route('member.password.update');
+    $dashboardRoute = $isAdmin ? route('admin.dashboard') : route('member.dashboard');
+@endphp
+
 @section('content')
     <div class="content">
         <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
@@ -10,7 +18,7 @@
                 <nav>
                     <ol class="breadcrumb mb-0">
                         <li class="breadcrumb-item">
-                            <a href="{{ route('admin.dashboard') }}"><i class="ti ti-smart-home"></i></a>
+                            <a href="{{ $dashboardRoute }}"><i class="ti ti-smart-home"></i></a>
                         </li>
                         <li class="breadcrumb-item">Pages</li>
                         <li class="breadcrumb-item active" aria-current="page">Profile</li>
@@ -40,15 +48,16 @@
                     </ul>
                 </div>
                 <div class="tab-content">
+
+                    {{-- KYC Tab --}}
                     <div class="tab-pane fade show active" id="kycTab">
                         <h6 class="mb-3">Basic Information</h6>
                         <form id="adminProfileForm" enctype="multipart/form-data">
                             @csrf
-                            @method('POST')
                             <div class="row mb-3">
                                 <div class="col-md-12 d-flex align-items-center bg-light rounded p-3">
                                     <div class="avatar avatar-xxl rounded-circle border border-dashed me-3 text-dark">
-                                        @if (auth()->user()->profile_image)
+                                        @if(auth()->user()->profile_image)
                                             <img src="{{ asset(auth()->user()->profile_image) }}" class="rounded-circle"
                                                 width="100">
                                         @else
@@ -59,10 +68,8 @@
                                         <label class="form-label">Profile Photo</label>
                                         <input type="file" name="photo" class="form-control">
                                         <small class="text-muted">Recommended size: 150x150</small><br>
-                                        @if (auth()->user()->role)
-                                            <span class="badge bg-primary text-uppercase">
-                                                {{ auth()->user()->role }}
-                                            </span>
+                                        @if(auth()->user()->role)
+                                            <span class="badge bg-primary text-uppercase">{{ auth()->user()->role }}</span>
                                         @endif
                                         <small class="text-danger error-text photo_error"></small>
                                     </div>
@@ -83,13 +90,11 @@
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Email</label>
-                                    <input type="email" name="email" class="form-control"
-                                        value="{{ auth()->user()->email }}" readonly>
+                                    <input type="email" class="form-control" value="{{ auth()->user()->email }}" readonly>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Mobile</label>
-                                    <input type="text" name="mobile" class="form-control"
-                                        value="{{ auth()->user()->mobile }}" readonly>
+                                    <input type="text" class="form-control" value="{{ auth()->user()->mobile }}" readonly>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Member ID</label>
@@ -109,51 +114,50 @@
                                 </button>
                             </div>
                         </form>
-                    </div>                   
+                    </div>
+
+                    {{-- Bank Tab --}}
                     <div class="tab-pane fade" id="bankTab">
                         <h6 class="mb-3">Bank Information</h6>
-                    
                         <form id="bankForm">
                             @csrf
-                    
                             <div class="row">
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Account Holder Name</label>
-                                    <input type="text" name="account_name" class="form-control" value="{{ $bankdetail->account_holder_name ?? '' }}">
+                                    <input type="text" name="account_name" class="form-control"
+                                        value="{{ $bankdetail->account_holder_name ?? '' }}">
                                     <small class="text-danger error-text account_name_error"></small>
                                 </div>
-                    
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Account Number</label>
-                                    <input type="text" name="account_number" class="form-control" value="{{ $bankdetail->account_number ?? '' }}">
+                                    <input type="text" name="account_number" class="form-control"
+                                        value="{{ $bankdetail->account_number ?? '' }}">
                                     <small class="text-danger error-text account_number_error"></small>
                                 </div>
-                    
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">IFSC Code</label>
-                                    <input type="text" name="ifsc_code" class="form-control" value="{{ $bankdetail->ifsc_code ?? '' }}">
+                                    <input type="text" name="ifsc_code" class="form-control"
+                                        value="{{ $bankdetail->ifsc_code ?? '' }}">
                                     <small class="text-danger error-text ifsc_code_error"></small>
                                 </div>
-                    
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Bank Name</label>
-                                    <input type="text" name="bank_name" class="form-control" value="{{ $bankdetail->ifsc_code ?? '' }}">
+                                    <input type="text" name="bank_name" class="form-control"
+                                        value="{{ $bankdetail->bank_name ?? '' }}">
                                     <small class="text-danger error-text bank_name_error"></small>
                                 </div>
-                    
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Branch</label>
-                                    <input type="text" name="branch_name" class="form-control" value="{{ $bankdetail->branch_name ?? '' }}">
+                                    <input type="text" name="branch_name" class="form-control"
+                                        value="{{ $bankdetail->branch_name ?? '' }}">
                                     <small class="text-danger error-text branch_name_error"></small>
                                 </div>
-                                
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">UPI ID</label>
                                     <input type="text" name="upi" class="form-control" value="{{ $bankdetail->upi ?? '' }}">
                                     <small class="text-danger error-text upi_error"></small>
                                 </div>
                             </div>
-                    
                             <div class="text-end">
                                 <button type="submit" class="btn btn-primary" id="bankBtn">
                                     <span class="btn-text">Save Bank Details</span>
@@ -161,7 +165,9 @@
                                 </button>
                             </div>
                         </form>
-                    </div>                    
+                    </div>
+
+                    {{-- Password Tab --}}
                     <div class="tab-pane fade" id="passwordTab">
                         <form id="changePasswordForm">
                             @csrf
@@ -191,184 +197,135 @@
                             </div>
                         </form>
                     </div>
+
                 </div>
             </div>
         </div>
     </div>
+
     <script>
-        $(document).ready(function() {
+        var profileUpdateRoute = "{{ $profileUpdateRoute }}";
+        var bankDetailsRoute = "{{ $bankDetailsRoute }}";
+        var passwordUpdateRoute = "{{ $passwordUpdateRoute }}";
 
-            $("#adminProfileForm").on("submit", function(e) {
-                e.preventDefault();
-
-                // Clear old errors
-                $(".error-text").text('');
-                $(".form-control").removeClass('is-invalid');
-
-                let formData = new FormData(this);
-
-                let $btn = $("#saveBtn");
-
-                // Show Loader
-                $btn.prop("disabled", true);
-                $btn.find(".btn-text").text("Updating...");
-                $btn.find(".btn-spinner").removeClass("d-none");
-
-                $.ajax({
-                    url: "{{ route('admin.profile.update') }}",
-                    type: "POST",
-                    data: formData,
-                    contentType: false,
-                    processData: false,
-
-                    success: function(res) {
-
-                        if (res.status === true) {
-                            toastr.success(res.message);
-                        } else {
-                            toastr.error(res.message);
-                        }
-                    },
-
-                    error: function(xhr) {
-
-                        if (xhr.status === 422) {
-
-                            let errors = xhr.responseJSON.errors;
-
-                            $.each(errors, function(key, value) {
-
-                                // Show error text
-                                $("." + key + "_error").text(value[0]);
-
-                                // Highlight input
-                                $("[name=" + key + "]").addClass("is-invalid");
-                            });
-
-                        } else {
-                            toastr.error("Something went wrong!");
-                        }
-                    },
-
-                    complete: function() {
-
-                        // Hide Loader
-                        $btn.prop("disabled", false);
-                        $btn.find(".btn-text").text("Update Profile");
-                        $btn.find(".btn-spinner").addClass("d-none");
-                    }
-                });
-            });
-
-        });
-    </script>
-    <script>
-        $('#bankForm').submit(function(e) {
+        // Profile Update
+        $("#adminProfileForm").on("submit", function (e) {
             e.preventDefault();
+            $(".error-text").text('');
+            $(".form-control").removeClass('is-invalid');
+            let formData = new FormData(this);
+            let $btn = $("#saveBtn");
+            $btn.prop("disabled", true);
+            $btn.find(".btn-text").text("Updating...");
+            $btn.find(".btn-spinner").removeClass("d-none");
 
+            $.ajax({
+                url: profileUpdateRoute,
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    if (res.status === true) {
+                        toastr.success(res.message);
+                    } else {
+                        toastr.error(res.message);
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        $.each(errors, function (key, value) {
+                            $("." + key + "_error").text(value[0]);
+                            $("[name=" + key + "]").addClass("is-invalid");
+                        });
+                    } else {
+                        toastr.error("Something went wrong!");
+                    }
+                },
+                complete: function () {
+                    $btn.prop("disabled", false);
+                    $btn.find(".btn-text").text("Update Profile");
+                    $btn.find(".btn-spinner").addClass("d-none");
+                }
+            });
+        });
+
+        // Bank Details
+        $('#bankForm').on('submit', function (e) {
+            e.preventDefault();
             let btn = $('#bankBtn');
-
-            // Clear old errors
             $('.error-text').text('');
             $('.form-control').removeClass('is-invalid');
-
-            // Show loader
             btn.prop('disabled', true);
             btn.find('.btn-text').text('Saving...');
             btn.find('.btn-loader').removeClass('d-none');
 
             $.ajax({
-                url: "{{ route('admin.bank.details') }}",
+                url: bankDetailsRoute,
                 type: "POST",
                 data: $(this).serialize(),
-
-                success: function(res) {
-
-                    btn.prop('disabled', false);
-                    btn.find('.btn-text').text('Save Bank Details');
-                    btn.find('.btn-loader').addClass('d-none');
-
+                success: function (res) {
                     toastr.success(res.message);
                 },
-
-                error: function(xhr) {
-
-                    btn.prop('disabled', false);
-                    btn.find('.btn-text').text('Save Bank Details');
-                    btn.find('.btn-loader').addClass('d-none');
-
+                error: function (xhr) {
                     if (xhr.status === 422) {
                         let errors = xhr.responseJSON.errors;
-
-                        $.each(errors, function(key, value) {
+                        $.each(errors, function (key, value) {
                             $('.' + key + '_error').text(value[0]);
                             $('[name="' + key + '"]').addClass('is-invalid');
                         });
                     } else {
                         toastr.error('Something went wrong!');
                     }
+                },
+                complete: function () {
+                    btn.prop('disabled', false);
+                    btn.find('.btn-text').text('Save Bank Details');
+                    btn.find('.btn-loader').addClass('d-none');
+                }
+            });
+        });
+
+        // Change Password
+        $("#changePasswordForm").on("submit", function (e) {
+            e.preventDefault();
+            $(".error-text").text('');
+            $(".form-control").removeClass('is-invalid');
+            let $btn = $("#passwordBtn");
+            $btn.prop("disabled", true);
+            $btn.find(".btn-text").text("Updating...");
+            $btn.find(".btn-spinner").removeClass("d-none");
+
+            $.ajax({
+                url: passwordUpdateRoute,
+                type: "POST",
+                data: $(this).serialize(),
+                success: function (res) {
+                    if (res.status) {
+                        toastr.success(res.message);
+                        $("#changePasswordForm")[0].reset();
+                    } else {
+                        toastr.error(res.message);
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        $.each(errors, function (key, value) {
+                            $("." + key + "_error").text(value[0]);
+                            $("[name=" + key + "]").addClass("is-invalid");
+                        });
+                    } else {
+                        toastr.error("Something went wrong!");
+                    }
+                },
+                complete: function () {
+                    $btn.prop("disabled", false);
+                    $btn.find(".btn-text").text("Update Password");
+                    $btn.find(".btn-spinner").addClass("d-none");
                 }
             });
         });
     </script>
-
-    <script>
-        $(document).ready(function() {
-
-            $("#changePasswordForm").on("submit", function(e) {
-                e.preventDefault();
-
-                $(".error-text").text('');
-                $(".form-control").removeClass('is-invalid');
-
-                let formData = $(this).serialize();
-                let $btn = $("#passwordBtn");
-
-                // Show Loader
-                $btn.prop("disabled", true);
-                $btn.find(".btn-text").text("Updating...");
-                $btn.find(".btn-spinner").removeClass("d-none");
-
-                $.ajax({
-                    url: "{{ route('admin.password.update') }}",
-                    type: "POST",
-                    data: formData,
-
-                    success: function(res) {
-                        if (res.status) {
-                            toastr.success(res.message);
-                            $("#changePasswordForm")[0].reset();
-                        } else {
-                            toastr.error(res.message);
-                        }
-                    },
-
-                    error: function(xhr) {
-
-                        if (xhr.status === 422) {
-
-                            let errors = xhr.responseJSON.errors;
-
-                            $.each(errors, function(key, value) {
-                                $("." + key + "_error").text(value[0]);
-                                $("[name=" + key + "]").addClass("is-invalid");
-                            });
-
-                        } else {
-                            toastr.error("Something went wrong!");
-                        }
-                    },
-
-                    complete: function() {
-                        // Hide Loader
-                        $btn.prop("disabled", false);
-                        $btn.find(".btn-text").text("Update Password");
-                        $btn.find(".btn-spinner").addClass("d-none");
-                    }
-                });
-            });
-
-        });
-    </script>
-
 @endsection

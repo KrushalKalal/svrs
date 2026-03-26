@@ -3,186 +3,125 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Lead;
-use Carbon\Carbon;
+use App\Models\CoinChart;
+use App\Models\CoinTrade;
+use App\Models\GoldCoinWallet;
+use App\Models\MemberMembership;
+use App\Models\ReferralReward;
+use App\Models\RewardTier;
+use App\Models\UserRewardClaim;
+use App\Models\Wallet;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardController extends Controller
 {
-    public function dashboard(Request $request) 
-    {
-        
-        $today      = Carbon::today();
-        $tomorrow   = Carbon::tomorrow();
-        $yesterday  = Carbon::yesterday();
-        $monthStart = Carbon::now()->startOfMonth();
-        $monthEnd   = Carbon::now()->endOfMonth();
-
-        $baseQuery = Lead::query()->empScope()->withCount('meetings');
-
-        $meetingCounts = [
-
-            // TODAY
-            'today' => (clone $baseQuery)
-                ->whereHas('latestMeeting', function ($q) use ($today) {
-                    $q->whereDate('next_meeting_date', $today);
-                })
-                ->count(),
-
-            // TOMORROW
-            'tomorrow' => (clone $baseQuery)
-                ->whereHas('latestMeeting', function ($q) use ($tomorrow) {
-                    $q->whereDate('next_meeting_date', $tomorrow);
-                })
-                ->count(),
-
-            // Fresh leads
-            'fresh_leads' => (clone $baseQuery)
-                ->whereDoesntHave('meetings')
-                ->count(),
-
-            // WEEKEND (current month)
-            'weekend' => (clone $baseQuery)
-                ->whereHas('latestMeeting', function ($q) use ($monthStart, $monthEnd) {
-                    $q->whereBetween('next_meeting_date', [$monthStart, $monthEnd])
-                        ->whereIn(DB::raw('DAYOFWEEK(next_meeting_date)'), [1, 7]);
-                })
-                ->count(),
-
-            // VISIT DONE
-            'visit_done' => (clone $baseQuery)
-                ->whereHas('latestMeeting', function ($q) {
-                    $q->where('meeting_status', 'visit done');
-                })
-                ->count(),
-
-
-            'pending' => (clone $baseQuery)
-                ->whereHas('latestMeeting', function ($q) use ($today) {
-                    // Latest meeting date is in the past
-                    $q->whereDate('next_meeting_date', '<', $today);
-                })
-                ->whereDoesntHave('meetings', function ($q) {
-                    // No meeting exists AFTER the latest meeting
-                    $q->whereColumn('meetings.created_at', '>', DB::raw("(SELECT MAX(m2.created_at) FROM meetings m2 WHERE m2.leads_id = meetings.leads_id)"));
-                })
-                ->count(),
-        ];
-
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Dashboard data fetched successfully',
-            'data' => $meetingCounts
-        ]);
-    }
-    public function dashboard_lead($type)
-    {
-        $today = Carbon::today();
-
-        $baseQuery = Lead::query()->empScope()->with('latestMeeting')->withCount('meetings');
-
-        switch ($type) {
-            case 'visit_done':
-                $leadIds = $baseQuery->whereHas('latestMeeting', fn($q) => $q->where('meeting_status', 'visit done'))->pluck('id');
-                break;
-                
-            case 'pending':
-                $leadIds = $baseQuery
-                    ->whereHas('latestMeeting', function ($q) use ($today) {
-                        $q->whereDate('next_meeting_date', '<', $today);
-                    })
-                    ->whereDoesntHave('meetings', function ($q) {
-                        $q->whereColumn('meetings.created_at', '>', DB::raw("(SELECT MAX(m2.created_at) FROM meetings m2 WHERE m2.leads_id = meetings.leads_id)"));
-                    })
-                    ->pluck('id');
-                break;
-
-            case 'today':
-                $leadIds = $baseQuery
-                    ->whereHas('latestMeeting', fn($q) => $q->whereDate('next_meeting_date', $today))
-                    ->pluck('id');
-                break;
-
-            case 'tomorrow':
-                $leadIds = $baseQuery
-                    ->whereHas('latestMeeting', fn($q) => $q->whereDate('next_meeting_date', $today->copy()->addDay()))
-                    ->pluck('id');
-                break;
-
-            case 'fresh_leads':
-                $leadIds = $baseQuery->whereDoesntHave('meetings')->pluck('id');
-                break;
-
-            case 'weekend':
-                $startOfMonth = Carbon::now()->startOfMonth()->toDateString();
-                $endOfMonth   = Carbon::now()->endOfMonth()->toDateString();
-                $leadIds = $baseQuery
-                    ->whereHas('latestMeeting', function ($q) use ($startOfMonth, $endOfMonth) {
-                        $q->whereBetween('next_meeting_date', [$startOfMonth, $endOfMonth])
-                            ->whereIn(DB::raw('DAYOFWEEK(next_meeting_date)'), [1, 7]);
-                    })
-                    ->pluck('id');
-                break;
-
-            default:
-                $leadIds = collect();
-        }
-
-        $leads = Lead::query()->whereIn('id', $leadIds)->with('latestMeeting')->withCount('meetings')->get();
-        
-        return response()->json([
-            'status' => true,
-            'message' => $type.' lead fetched successfully',
-            'data' => $leads
-        ]);
-    }
-    public function notifications(Request $request)
+    public function index(Request $request)
     {
         $user = $request->user();
 
-        return response()->json([
-            'unread_count' => $user->unreadNotifications()->count(),
-            'notifications' => $user->notifications()
-                ->latest()
-                ->take(50)
-                ->get()
-                ->map(function ($notification) {
-                    return [
-                        'id' => $notification->id,
-                        'title' => $notification->data['title'] ?? '',
-                        'message' => $notification->data['message'] ?? '',
-                        'type' => $notification->type,
-                        'read_at' => $notification->read_at,
-                        'created_at' => $notification->created_at->toDateTimeString(),
+        // Wallet
+        $wallet = Wallet::where('user_id', $user->id)->first();
+        $walletBalance = $wallet?->balance ?? 0;
+
+        // Coin
+        $bought = CoinTrade::where('user_id', $user->id)->whereIn('type', ['buy', 'reward'])->sum('quantity');
+        $sold = CoinTrade::where('user_id', $user->id)->where('type', 'sell')->sum('quantity');
+        $coinBalance = $bought - $sold;
+        $currentPrice = CoinChart::latest()->value('close_price') ?? 0;
+        $coinValue = $coinBalance * $currentPrice;
+
+        // Referrals
+        $totalReferrals = $user->allDirectReferrals()->count();
+        $activeReferrals = $user->active_refer_member_count;
+        $referralEarnings = ReferralReward::where('earner_id', $user->id)->sum('reward_quantity');
+
+        // Gold Coin Wallet
+        $goldWallet = GoldCoinWallet::where('user_id', $user->id)->first();
+
+        // Membership
+        $membership = MemberMembership::where('user_id', $user->id)->first();
+
+        // Milestone Progress
+        // Auto-detect FK column: 'tier_id' or 'reward_tier_id' — whichever exists in DB
+        $milestones = [];
+        if ($user->is_refer_member) {
+            try {
+                $tiers = RewardTier::orderBy('required_referrals')->get();
+                $claimsTable = (new UserRewardClaim)->getTable();
+                $columns = Schema::getColumnListing($claimsTable);
+                $tierFkColumn = in_array('reward_tier_id', $columns) ? 'reward_tier_id' : 'tier_id';
+
+                foreach ($tiers as $tier) {
+                    $pct = $tier->required_referrals > 0
+                        ? min(100, round(($activeReferrals / $tier->required_referrals) * 100))
+                        : 0;
+
+                    $claimed = UserRewardClaim::where('user_id', $user->id)
+                        ->where($tierFkColumn, $tier->id)
+                        ->where('status', 1)
+                        ->exists();
+
+                    $milestones[] = [
+                        'tier_id' => $tier->id,
+                        'name' => $tier->name,
+                        'g_coins' => $tier->g_coins,
+                        'required' => $tier->required_referrals,
+                        'current' => $activeReferrals,
+                        'progress' => $pct,
+                        'achieved' => $activeReferrals >= $tier->required_referrals,
+                        'claimed' => $claimed,
                     ];
-                })
-        ]);
-    }
-    public function notifications_read(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'id' => 'required|string'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error',
-                'errors'  => $validator->errors(),
-            ], 422);
+                }
+            } catch (\Exception $e) {
+                $milestones = []; // dashboard still loads even if milestones fail
+            }
         }
-       
-        $notification = $request->user()->notifications()->where('id', $request->id)->firstOrFail();
-        $notification->markAsRead();
-        $leadId = $notification->data['lead_id'] ?? null;
 
         return response()->json([
-            'success' => true,
-            'message' => 'Notification marked as read',
-            'lead_id' => $leadId
+            'status' => true,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->full_name,
+                'member_code' => $user->member_code,
+                'email' => $user->email,
+                'mobile' => $user->mobile,
+                'profile_image' => $user->profile_image ? asset($user->profile_image) : null,
+                'status' => $user->status,
+                'is_refer_member' => (bool) $user->is_refer_member,
+            ],
+            'wallet' => [
+                'balance' => $walletBalance,
+            ],
+            'coin' => [
+                'balance' => round($coinBalance, 8),
+                'current_price' => $currentPrice,
+                'inr_value' => round($coinValue, 2),
+            ],
+            'referrals' => [
+                'total' => $totalReferrals,
+                'active' => $activeReferrals,
+                'earnings_coins' => round($referralEarnings, 8),
+            ],
+            'gold_wallet' => $user->is_refer_member ? [
+                'balance' => $goldWallet?->balance ?? 0,
+                'inr_value' => round(($goldWallet?->balance ?? 0) / 10, 2),
+            ] : null,
+            'membership' => $membership ? [
+                'status' => $membership->status,
+                'status_label' => $membership->status_label,
+                'refer_code' => $membership->refer_code,
+                'refer_link' => $membership->refer_link,
+            ] : null,
+            'milestones' => $milestones,
+            'features' => [
+                'can_add_member' => (bool) $user->is_refer_member,
+                'can_refer' => (bool) $user->is_refer_member,
+                'can_view_rewards' => (bool) $user->is_refer_member,
+                'can_view_gold' => (bool) $user->is_refer_member,
+                'can_view_income' => (bool) $user->is_refer_member,
+                'show_membership_badge' => !$user->is_refer_member && $user->status == 1,
+            ],
         ]);
     }
 }

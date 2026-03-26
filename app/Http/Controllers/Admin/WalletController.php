@@ -22,6 +22,7 @@ class WalletController extends Controller
         $wallet = Wallet::where('user_id', auth()->id())->first();
         $bankDetail = BankDetail::where('user_id', auth()->id())->first();
         $hasBankDetail = $bankDetail ? true : false;
+
         $pendingDeposit = WalletTransaction::where('wallet_id', optional($wallet)->id)
             ->where('type', 'credit')
             ->where('status', 2)
@@ -35,6 +36,7 @@ class WalletController extends Controller
         $transactions = WalletTransaction::where('wallet_id', $wallet->id ?? '')
             ->latest()
             ->get();
+
         return view('admin.my_wallet', compact(
             'contact',
             'depositsetting',
@@ -46,28 +48,26 @@ class WalletController extends Controller
             'transactions'
         ));
     }
+
     public function wallet_addMoney(Request $request)
     {
         $deposit = DepositSetting::first();
 
         if (!$deposit) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Deposit settings not configured.'
-            ]);
+            return response()->json(['status' => false, 'message' => 'Deposit settings not configured.']);
         }
 
         $validator = Validator::make($request->all(), [
             'amount' => 'required|numeric|min:' . $deposit->min_amount . '|max:' . $deposit->max_amount,
-            'screenshot' => 'required|image|mimes:jpg,jpeg,png|max:2048'
+            'screenshot' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+        ], [
+            'amount.min' => 'Minimum deposit is ₹' . $deposit->min_amount,
+            'amount.max' => 'Maximum deposit is ₹' . $deposit->max_amount,
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'errors' => $validator->errors()
-            ], 422);
+            return response()->json(['errors' => $validator->errors()], 422);
         }
-
 
         $filePath = null;
         if ($request->hasFile('screenshot')) {
@@ -77,71 +77,79 @@ class WalletController extends Controller
             $file->move(public_path($path), $filename);
             $filePath = $path . $filename;
         }
+
         $wallet = Wallet::firstOrCreate(
             ['user_id' => auth()->id()],
-            [
-                'balance' => 0,
-                'status'  => 1
-            ]
+            ['balance' => 0]
         );
+
+        // Pending — admin approves, wallet credited on approval only (no auto coin buy)
         WalletTransaction::create([
             'wallet_id' => $wallet->id,
-            'user_id'   => auth()->id(),
-            'amount'    => $request->amount,
-            'type'      => 'credit',
-            'remark'    => 'Add Money Request',
-            'invoice'   => $filePath,
-            'status'    => 2,
-        ]);
-
-        return response()->json([
-            'status'  => true,
-            'message' => 'Payment Request Submitted Successfully!'
-        ]);
-    }
-    public function withdrawRequest(Request $request)
-    {
-        $setting = WithdrawalSetting::first();
-
-        $request->validate([
-            'amount' => 'required|numeric|min:' . $setting->min_amount . '|max:' . $setting->max_amount,
-        ]);
-
-        // Get Wallet
-        $wallet = Wallet::where('user_id', auth()->id())->first();
-
-        if (!$wallet) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Wallet not found.'
-            ]);
-        }
-
-        // Check Balance
-        if ($request->amount > $wallet->balance) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Insufficient wallet balance.'
-            ]);
-        }
-
-        WalletTransaction::create([
-            'wallet_id' => $wallet->id,
-            'user_id'   => auth()->id(),
-            'amount'    => $request->amount,
-            'type'      => 'debit',
-            'remark'    => 'Withdrawal Request',
-            'status'    => 2 // Pending Admin Approval
+            'user_id' => auth()->id(),
+            'amount' => $request->amount,
+            'type' => 'credit',
+            'remark' => 'Deposit Request',
+            'invoice' => $filePath,
+            'status' => 2, // pending admin approval
         ]);
 
         return response()->json([
             'status' => true,
-            'message' => 'Withdrawal request submitted successfully.'
+            'message' => 'Payment request submitted! Admin will approve shortly.',
         ]);
     }
+
+    public function withdrawRequest(Request $request)
+    {
+        $setting = WithdrawalSetting::first();
+
+        $validator = Validator::make($request->all(), [
+            'amount' => 'required|numeric|min:' . $setting->min_amount . '|max:' . $setting->max_amount,
+        ], [
+            'amount.min' => 'Minimum withdrawal is ₹' . $setting->min_amount,
+            'amount.max' => 'Maximum withdrawal is ₹' . $setting->max_amount,
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $wallet = Wallet::where('user_id', auth()->id())->first();
+
+        if (!$wallet) {
+            return response()->json(['status' => false, 'message' => 'Wallet not found.']);
+        }
+
+        if ($request->amount > $wallet->balance) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Insufficient wallet balance. Available: ₹' . number_format($wallet->balance, 2),
+            ]);
+        }
+
+        WalletTransaction::create([
+            'wallet_id' => $wallet->id,
+            'user_id' => auth()->id(),
+            'amount' => $request->amount,
+            'type' => 'debit',
+            'remark' => 'Withdrawal Request',
+            'status' => 2, // pending admin approval
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Withdrawal request submitted successfully.',
+        ]);
+    }
+
     public function deposit_approval()
     {
-        $transactions = WalletTransaction::with('user')->where('type', 'credit')->latest()->get();
+        $transactions = WalletTransaction::with('user')
+            ->where('type', 'credit')
+            ->where('status', 2) // show only pending
+            ->latest()
+            ->get();
         return view('admin.deposit_approval', compact('transactions'));
     }
 
@@ -150,51 +158,46 @@ class WalletController extends Controller
         $txn = WalletTransaction::with('wallet')->findOrFail($request->id);
 
         if ($txn->status != 2) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Transaction already processed.'
-            ]);
+            return response()->json(['success' => false, 'message' => 'Transaction already processed.']);
         }
-
-        $wallet = $txn->wallet;
 
         if ($request->status == 1) {
-            $txn->status = 1;
-            $txn->remark = "Add Money Approved";
-        }
-
-        if ($request->status == 0) {
-            $txn->status = 0;
-            $txn->remark = "Add Money Rejected";
-        }
-        $txn->save();
-
-        if ($request->status == 1) {
+            // Credit wallet balance on approval — no coin buy
             $wallet = $txn->wallet;
 
             if (!$wallet) {
-                $wallet = Wallet::new([
+                $wallet = Wallet::create([
                     'user_id' => $txn->user_id,
                     'balance' => $txn->amount,
-                    'status'  => '1',
                 ]);
             } else {
                 $wallet->balance += $txn->amount;
                 $wallet->save();
             }
+
+            $txn->status = 1;
+            $txn->remark = 'Deposit Approved';
         }
+
+        if ($request->status == 0) {
+            $txn->status = 0;
+            $txn->remark = 'Deposit Rejected';
+        }
+
+        $txn->save();
 
         return response()->json([
             'success' => true,
-            'message' => $request->status == 1
-                ? 'Transaction Approved Successfully'
-                : 'Transaction Rejected'
+            'message' => $request->status == 1 ? 'Deposit Approved Successfully' : 'Deposit Rejected',
         ]);
     }
 
     public function withdrawal_approval()
     {
-        $transactions = WalletTransaction::with('user')->where('type', 'debit')->latest()->get();
+        $transactions = WalletTransaction::with('user')
+            ->where('type', 'debit')
+            ->latest()
+            ->get();
         return view('admin.withdrawal_approval', compact('transactions'));
     }
 
@@ -204,43 +207,25 @@ class WalletController extends Controller
         $txn = WalletTransaction::with('wallet')->findOrFail($request->id);
 
         if ($txn->status != 2) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Transaction already processed.'
-            ]);
+            return response()->json(['success' => false, 'message' => 'Transaction already processed.']);
         }
 
         if ($request->status == 1) {
-
             $approvedAmount = $request->amount;
 
             if ($approvedAmount <= 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid amount.'
-                ]);
+                return response()->json(['success' => false, 'message' => 'Invalid amount.']);
             }
-
             if ($approvedAmount < $withdrawal->min_amount) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Minimum withdrawal is ₹' . $withdrawal->min_amount
-                ]);
+                return response()->json(['success' => false, 'message' => 'Minimum withdrawal is ₹' . $withdrawal->min_amount]);
             }
-
             if ($approvedAmount > $withdrawal->max_amount) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Maximum withdrawal is ₹' . $withdrawal->max_amount
-                ]);
+                return response()->json(['success' => false, 'message' => 'Maximum withdrawal is ₹' . $withdrawal->max_amount]);
             }
-            $wallet = $txn->wallet;
 
+            $wallet = $txn->wallet;
             if (!$wallet || $wallet->balance < $approvedAmount) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Insufficient wallet balance.'
-                ]);
+                return response()->json(['success' => false, 'message' => 'Insufficient wallet balance.']);
             }
 
             $wallet->balance -= $approvedAmount;
@@ -248,21 +233,19 @@ class WalletController extends Controller
 
             $txn->status = 1;
             $txn->amount = $approvedAmount;
-            $txn->remark = "Withdrawal Approved";
+            $txn->remark = 'Withdrawal Approved';
         }
 
         if ($request->status == 0) {
             $txn->status = 0;
-            $txn->remark = "Withdrawal Rejected";
+            $txn->remark = 'Withdrawal Rejected';
         }
 
         $txn->save();
 
         return response()->json([
             'success' => true,
-            'message' => $request->status == 1
-                ? 'Withdrawal Approved Successfully'
-                : 'Withdrawal Rejected'
+            'message' => $request->status == 1 ? 'Withdrawal Approved Successfully' : 'Withdrawal Rejected',
         ]);
     }
 }

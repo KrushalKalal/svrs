@@ -87,7 +87,8 @@
                                                     data-id="{{ $items->id }}" data-status="0">
                                                     <i class="fa fa-ban"></i>
                                                 </button>
-                                                @if ($items->bankDetail)                                                    
+                                                @if ($items->bankDetail)
+                                                    {{-- FIX: admin.member.bankdetails (was: member.bankdetails) --}}
                                                     <a href="{{ route('admin.member.bankdetails', $items->bankDetail->id) }}" class="btn btn-sm btn-info">
                                                         <i class="fa fa-eye"></i>
                                                     </a>
@@ -123,6 +124,7 @@
                 if (result.isConfirmed) {
                     button.prop('disabled', true).text('Updating...');
                     $.ajax({
+                        {{-- FIX: admin.member.update.status (was: member.update.status) --}}
                         url: "{{ route('admin.member.update.status') }}",
                         type: "POST",
                         data: {
@@ -132,15 +134,11 @@
                         },
                         success: function(res) {
                             if (res.success) {
-
                                 let badge = $('#row_' + id).find('.status-badge');
-
                                 if (status == 1) {
-                                    badge.removeClass().addClass(
-                                        'badge bg-success status-badge').text('Active');
+                                    badge.removeClass().addClass('badge bg-success status-badge').text('Active');
                                 } else {
-                                    badge.removeClass().addClass('badge bg-danger status-badge')
-                                        .text('Inactive');
+                                    badge.removeClass().addClass('badge bg-danger status-badge').text('Inactive');
                                 }
                                 Swal.fire({
                                     title: 'Updated!',
@@ -150,7 +148,6 @@
                                 }).then(() => {
                                     location.reload();
                                 });
-
                             } else {
                                 Swal.fire('Error!', res.message, 'error');
                             }
@@ -159,11 +156,9 @@
                             Swal.fire('Error!', 'Something went wrong!', 'error');
                         },
                         complete: function() {
-                            button.prop('disabled', false)
-                                .text(status == 1 ? 'Activate' : 'Inactivate');
+                            button.prop('disabled', false).text(status == 1 ? 'Activate' : 'Inactivate');
                         }
                     });
-
                 }
             });
         });

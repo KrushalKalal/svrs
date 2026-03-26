@@ -44,8 +44,8 @@
 
                         <div class="mb-3">
                             <label>Market Price</label>
-                            <input type="number" step="0.01" name="price" id="tradePrice" class="form-control"
-                                readonly required>
+                            <input type="number" step="0.01" name="price" id="tradePrice" class="form-control" readonly
+                                required>
                         </div>
 
                         <div class="mb-3">
@@ -88,7 +88,7 @@
                     type: type
                 },
 
-                success: function(res) {
+                success: function (res) {
 
                     if (!res.status || res.data.length === 0) {
                         $("#candleChart").html('<div class="text-center text-danger">No Data Found</div>');
@@ -127,7 +127,7 @@
                         },
                         yaxis: {
                             labels: {
-                                formatter: function(val) {
+                                formatter: function (val) {
                                     return "₹ " + val.toFixed(2);
                                 }
                             }
@@ -146,27 +146,27 @@
                     window.coinChart.render();
                 },
 
-                error: function() {
+                error: function () {
                     toastr.error("Chart Load Failed");
                 }
             });
         }
 
-        $(document).ready(function() {
+        $(document).ready(function () {
             loadCoinChart('today');
         });
 
-        $('#filterType').on('change', function() {
+        $('#filterType').on('change', function () {
             loadCoinChart($(this).val());
         });
 
-        setInterval(function() {
+        setInterval(function () {
             loadCoinChart(window.currentFilterType);
         }, 300000);
     </script>
 
     <script>
-        $(document).on('click', '.tradeBtn', function() {
+        $(document).on('click', '.tradeBtn', function () {
 
             let type = $(this).data('type');
 
@@ -179,26 +179,26 @@
                 title: (type === 'buy' ? 'Buy Coin' : 'Sell Coin'),
 
                 html: `
-                <div style="text-align:left; margin-top:10px">
-                    <div style="margin-bottom:15px">
-                        <div style="font-weight:600; margin-bottom:5px">Market Price</div>
-                        <input type="text"
-                            id="swalPrice"
-                            class="swal2-input"
-                            value="₹ ${window.latestPrice.toFixed(2)}"
-                            readonly
-                            style="margin:0; width:100%;">
-                    </div>
-                    <div>
-                        <div style="font-weight:600; margin-bottom:5px">Quantity</div>
-                        <input type="number"
-                            id="swalQty"
-                            class="swal2-input"
-                            placeholder="Enter Quantity"
-                            step="0.0001"
-                            style="margin:0; width:100%;">
-                    </div>
-                </div>`,
+                    <div style="text-align:left; margin-top:10px">
+                        <div style="margin-bottom:15px">
+                            <div style="font-weight:600; margin-bottom:5px">Market Price</div>
+                            <input type="text"
+                                id="swalPrice"
+                                class="swal2-input"
+                                value="₹ ${window.latestPrice.toFixed(2)}"
+                                readonly
+                                style="margin:0; width:100%;">
+                        </div>
+                        <div>
+                            <div style="font-weight:600; margin-bottom:5px">Quantity</div>
+                            <input type="number"
+                                id="swalQty"
+                                class="swal2-input"
+                                placeholder="Enter Quantity"
+                                step="0.0001"
+                                style="margin:0; width:100%;">
+                        </div>
+                    </div>`,
 
                 confirmButtonText: 'Submit Trade',
                 showCancelButton: true,
