@@ -1,122 +1,68 @@
-@extends('admin.layout.main-layout')
-@section('title', config('app.name') . ' || Gold Coin Wallet')
+@extends('member.layout.app-layout')
+@section('title', 'Gold Coin Wallet')
+@section('nav-title', 'Gold Coin Wallet')
+@section('nav-back') @endsection
+@section('nav-back-url', route('member.profile'))
 
 @section('content')
-    <div class="content">
-        <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-            <div class="my-auto mb-2">
-                <h2 class="mb-1">Gold Coin Wallet</h2>
-                <nav>
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="javascript:void(0);"><i class="ti ti-smart-home"></i></a></li>
-                        <li class="breadcrumb-item active">Gold Coin Wallet</li>
-                    </ol>
-                </nav>
-            </div>
-        </div>
 
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="card border-warning text-center">
-                    <div class="card-body py-4">
-                        <i class="ti ti-coin" style="font-size:3rem;color:#f0a500;"></i>
-                        <h2 class="mt-2 mb-0" style="color:#f0a500;">{{ number_format($wallet->balance ?? 0) }}</h2>
-                        <p class="text-muted mb-0">Available G-Coins</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card text-center">
-                    <div class="card-body py-4">
-                        <i class="ti ti-currency-rupee" style="font-size:3rem;" class="text-success"></i>
-                        <h2 class="mt-2 mb-0 text-success">&#8377;{{ number_format(($wallet->balance ?? 0) / 10, 2) }}</h2>
-                        <p class="text-muted mb-0">INR Equivalent</p>
-                        <small class="text-muted">10 G-Coins = &#8377;1</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card text-center">
-                    <div class="card-body py-4">
-                        <i class="ti ti-trophy" style="font-size:3rem;" class="text-primary"></i>
-                        <h2 class="mt-2 mb-0 text-primary">{{ number_format($wallet->total_earned ?? 0) }}</h2>
-                        <p class="text-muted mb-0">Total Earned (All Time)</p>
-                        <small class="text-muted">approx &#8377;{{ number_format(($wallet->total_earned ?? 0) / 10, 2) }}
-                            INR</small>
-                    </div>
-                </div>
-            </div>
+    {{-- 3 stat cards --}}
+    <div style="padding:16px 20px 0;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="gold-card app-card-inner" style="text-align:center;grid-column:1/-1;">
+            <i class="fa fa-coins" style="font-size:36px;color:var(--gold);margin-bottom:8px;display:block;"></i>
+            <p style="font-size:36px;font-weight:800;color:var(--gold);line-height:1;">{{ number_format($wallet->balance ?? 0) }}</p>
+            <p style="font-size:13px;color:var(--muted);margin-top:4px;">Available G-Coins</p>
         </div>
-
-        <div class="alert alert-info d-flex align-items-start mb-4">
-            <i class="ti ti-info-circle fs-5 me-2 mt-1"></i>
-            <div>
-                <strong>G-Coin Wallet Info:</strong> G-Coins are display-only rewards.
-                10 G-Coins = &#8377;1 INR equivalent value.
-                Coins are credited when admin approves your milestone claims.
-                Lifetime maximum: 25,000 G-Coins (&#8377;2,500).
-            </div>
+        <div class="app-card app-card-inner" style="text-align:center;">
+            <p style="font-size:11px;color:var(--muted);margin-bottom:4px;">INR Equivalent</p>
+            <p style="font-size:20px;font-weight:800;color:var(--green);">₹{{ number_format(($wallet->balance ?? 0) / 10, 2) }}</p>
+            <p style="font-size:11px;color:var(--muted);">10 G-Coins = ₹1</p>
         </div>
-
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="mb-0">Transaction History</h4>
-                <a href="{{ route('member.my.rewards') }}" class="btn btn-sm btn-warning">
-                    <i class="ti ti-gift me-1"></i>Claim More Rewards
-                </a>
-            </div>
-            <div class="card-body">
-                @if($transactions->isEmpty())
-                    <div class="text-center py-5">
-                        <i class="ti ti-coin-off fs-1 text-muted"></i>
-                        <p class="text-muted mt-2">No transactions yet. Claim your first milestone reward!</p>
-                        <a href="{{ route('member.my.rewards') }}" class="btn btn-warning">View Milestones</a>
-                    </div>
-                @else
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-striped" id="goldTxnTable">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Type</th>
-                                    <th>G-Coins</th>
-                                    <th>INR Value</th>
-                                    <th>Remark</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($transactions as $txn)
-                                    <tr>
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td>
-                                            <span class="badge bg-{{ $txn->type == 'credit' ? 'success' : 'danger' }}">
-                                                {{ ucfirst($txn->type) }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="{{ $txn->type == 'credit' ? 'text-success' : 'text-danger' }} fw-bold">
-                                                {{ $txn->type == 'credit' ? '+' : '-' }}{{ number_format($txn->amount) }}
-                                            </span>
-                                        </td>
-                                        <td>&#8377;{{ number_format($txn->amount / 10, 2) }}</td>
-                                        <td>{{ $txn->remark ?? '-' }}</td>
-                                        <td>{{ $txn->created_at->format('d M Y h:i A') }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
-            </div>
+        <div class="app-card app-card-inner" style="text-align:center;">
+            <p style="font-size:11px;color:var(--muted);margin-bottom:4px;">Total Earned</p>
+            <p style="font-size:20px;font-weight:800;color:var(--accent-blue);">{{ number_format($wallet->total_earned ?? 0) }}</p>
+            <p style="font-size:11px;color:var(--muted);">≈ ₹{{ number_format(($wallet->total_earned ?? 0) / 10, 2) }}</p>
         </div>
     </div>
 
-    <script>
-        $(document).ready(function () {
-            @if($transactions->isNotEmpty())
-                $('#goldTxnTable').DataTable({ order: [[5, 'desc']] });
-            @endif
-        });
-    </script>
+    <div style="margin:12px 20px 0;">
+        <div class="alert-app gold-alert">
+            <i class="fa fa-circle-info" style="color:var(--gold);"></i>
+            <span>G-Coins are display-only rewards. 10 G-Coins = ₹1 INR. Coins are credited when admin approves your milestone claims. Lifetime maximum: 25,000 G-Coins (₹2,500).</span>
+        </div>
+    </div>
+
+    <div class="section-label">Transaction History</div>
+
+    @if($transactions->isEmpty())
+        <div class="empty-state">
+            <i class="fa fa-coins"></i>
+            <p>No transactions yet. Claim your first milestone reward!</p>
+        </div>
+        <div style="padding:0 20px;">
+            <a href="{{ route('member.my.rewards') }}" class="btn-app btn-gold">View Milestones</a>
+        </div>
+    @else
+        <div style="margin:0 20px;" class="app-card" style="overflow:hidden;">
+            @foreach($transactions as $txn)
+                <div class="list-row">
+                    <div class="list-icon {{ $txn->type==='credit'?'gold':'red' }}" style="width:40px;height:40px;border-radius:12px;font-size:15px;">
+                        <i class="fa fa-{{ $txn->type==='credit'?'arrow-down':'arrow-up' }}"></i>
+                    </div>
+                    <div class="list-body">
+                        <div class="title">{{ $txn->remark ?? ucfirst($txn->type) }}</div>
+                        <div class="sub">{{ $txn->created_at->format('d M Y, h:i A') }}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:15px;font-weight:700;color:{{ $txn->type==='credit'?'var(--gold)':'var(--red)' }};">
+                            {{ $txn->type==='credit'?'+':'-' }}{{ number_format($txn->amount) }} G
+                        </div>
+                        <div style="font-size:11px;color:var(--muted);">₹{{ number_format($txn->amount/10,2) }}</div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
+
+    <div style="height:8px;"></div>
 @endsection

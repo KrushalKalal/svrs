@@ -1,144 +1,144 @@
-@extends('admin.layout.main-layout')
-@section('title', config('app.name') . ' || My Rewards')
+@extends('member.layout.app-layout')
+@section('title', 'My Rewards')
+@section('nav-title', 'My Rewards')
+@section('nav-back') @endsection
+@section('nav-back-url', route('member.profile'))
 
 @section('content')
-    <div class="content">
-        <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-            <div class="my-auto mb-2">
-                <h2 class="mb-1">My Rewards</h2>
-                <nav>
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="javascript:void(0);"><i class="ti ti-smart-home"></i></a></li>
-                        <li class="breadcrumb-item active">My Rewards</li>
-                    </ol>
-                </nav>
-            </div>
-        </div>
 
-        {{-- Referral Count Banner --}}
-        <div class="alert alert-info d-flex align-items-center mb-4">
-            <i class="ti ti-users fs-4 me-2"></i>
+    {{-- Active referral count --}}
+    <div style="margin:16px 20px 0;">
+        <div class="blue-card" style="padding:14px 16px;display:flex;align-items:center;gap:10px;">
+            <div class="list-icon teal" style="width:36px;height:36px;border-radius:10px;font-size:16px;flex-shrink:0;"><i
+                    class="fa fa-users"></i></div>
             <div>
-                <strong>Your Active Refer Members (Level 1): {{ $eligibility['referral_count'] }}</strong>
-                <span class="text-muted ms-2">Only activated members who have paid &#8377;519 count toward
-                    milestones.</span>
-            </div>
-        </div>
-
-        <div class="row">
-            @foreach($eligibility['milestones'] as $milestone)
-                <div class="col-md-4 mb-4">
-                    <div
-                        class="card h-100 {{ ($milestone['claim'] && $milestone['claim']->status == 1) ? 'border-success' : '' }}">
-                        <div
-                            class="card-header d-flex justify-content-between align-items-center
-                                    {{ ($milestone['claim'] && $milestone['claim']->status == 1) ? 'bg-success text-white' : '' }}">
-                            <h5 class="mb-0">{{ $milestone['tier']->name }}</h5>
-                            @if($milestone['claim'] && $milestone['claim']->status == 1)
-                                <span class="badge bg-white text-success">Claimed</span>
-                            @elseif($milestone['claim'] && $milestone['claim']->status == 2)
-                                <span class="badge bg-warning text-dark">Pending</span>
-                            @endif
-                        </div>
-                        <div class="card-body text-center">
-                            <div class="mb-3">
-                                <span style="font-size:2.5rem;font-weight:700;color:#f0a500;">
-                                    {{ number_format($milestone['tier']->g_coins) }}
-                                </span>
-                                <span class="text-muted fs-6"> G-Coins</span><br>
-                                <small class="text-muted">= &#8377;{{ number_format($milestone['tier']->g_coins / 10, 2) }} INR
-                                    value</small>
-                            </div>
-
-                            {{-- Progress Bar --}}
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <small>Progress</small>
-                                    <small>{{ $milestone['progress'] }} / {{ $milestone['tier']->required_referrals }}</small>
-                                </div>
-                                <div class="progress" style="height:10px;">
-                                    <div class="progress-bar bg-success"
-                                        style="width:{{ ($milestone['progress'] / $milestone['tier']->required_referrals) * 100 }}%">
-                                    </div>
-                                </div>
-                                <small class="text-muted">Need {{ $milestone['tier']->required_referrals }} active refer
-                                    members</small>
-                            </div>
-
-                            {{-- Claim Button / Status --}}
-                            @if($milestone['claim'] && $milestone['claim']->status == 1)
-                                <div class="alert alert-success py-2 mb-0">
-                                    <i class="ti ti-circle-check me-1"></i>
-                                    Approved on {{ $milestone['claim']->approved_at?->format('d M Y') }}
-                                </div>
-                            @elseif($milestone['claim'] && $milestone['claim']->status == 2)
-                                <div class="alert alert-warning py-2 mb-0">
-                                    <i class="ti ti-clock me-1"></i> Claim under review
-                                </div>
-                            @elseif($milestone['can_claim'])
-                                <button class="btn btn-success w-100 claim-btn" data-tier="{{ $milestone['tier']->id }}"
-                                    data-name="{{ $milestone['tier']->name }}"
-                                    data-coins="{{ number_format($milestone['tier']->g_coins) }}">
-                                    <i class="ti ti-gift me-1"></i> Claim {{ number_format($milestone['tier']->g_coins) }} G-Coins
-                                </button>
-                            @elseif($milestone['eligible'] && !$milestone['can_claim'])
-                                <div class="alert alert-secondary py-2 mb-0">
-                                    <i class="ti ti-lock me-1"></i> {{ $milestone['reason'] }}
-                                </div>
-                            @else
-                                <div class="alert alert-light py-2 mb-0 text-muted">
-                                    <i class="ti ti-lock me-1"></i>
-                                    Need {{ $milestone['tier']->required_referrals - $milestone['progress'] }} more referrals
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-
-        {{-- Info Box --}}
-        <div class="card mt-2">
-            <div class="card-header">
-                <h5 class="mb-0">How It Works</h5>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-md-4">
-                        <i class="ti ti-users fs-2 text-primary"></i>
-                        <p class="mt-2"><strong>10 Referrals</strong><br>First Reward: 10,000 G-Coins</p>
-                    </div>
-                    <div class="col-md-4">
-                        <i class="ti ti-trophy fs-2 text-success"></i>
-                        <p class="mt-2"><strong>15 Referrals</strong><br>Option A: 5,000 G-Coins</p>
-                    </div>
-                    <div class="col-md-4">
-                        <i class="ti ti-award fs-2 text-warning"></i>
-                        <p class="mt-2"><strong>20 Referrals</strong><br>Option B: 10,000 G-Coins</p>
-                    </div>
-                </div>
-                <div class="alert alert-info mt-2 mb-0">
-                    <strong>10 G-Coins = &#8377;1 INR</strong> &nbsp;|&nbsp;
-                    Lifetime max: 25,000 G-Coins = &#8377;2,500 &nbsp;|&nbsp;
-                    Must claim in order: First Reward &rarr; Option A &rarr; Option B
-                </div>
+                <div style="font-size:14px;font-weight:700;">Active Refer Members (Level 1):
+                    {{ $eligibility['referral_count'] }}</div>
+                <div style="font-size:12px;color:var(--muted);">Only activated members who paid ₹519 count toward
+                    milestones.</div>
             </div>
         </div>
     </div>
 
+    {{-- Milestone cards --}}
+    <div style="padding:16px 20px 0;display:flex;flex-direction:column;gap:12px;">
+        @foreach($eligibility['milestones'] as $milestone)
+            @php
+                $claimed = $milestone['claim'] && $milestone['claim']->status == 1;
+                $pending = $milestone['claim'] && $milestone['claim']->status == 2;
+                $canClaim = $milestone['can_claim'] ?? false;
+                $pct = $milestone['tier']->required_referrals > 0
+                    ? min(100, ($milestone['progress'] / $milestone['tier']->required_referrals) * 100) : 0;
+            @endphp
+            <div class="milestone-card {{ $claimed ? 'completed' : '' }}">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                    <div>
+                        <p style="font-size:15px;font-weight:700;">{{ $milestone['tier']->name }}</p>
+                        <p style="font-size:12px;color:var(--muted);">=
+                            ₹{{ number_format($milestone['tier']->g_coins / 10, 2) }} INR value</p>
+                    </div>
+                    <div style="text-align:right;">
+                        <p style="font-size:26px;font-weight:800;color:var(--gold);line-height:1;">
+                            {{ number_format($milestone['tier']->g_coins) }}</p>
+                        <p style="font-size:12px;color:var(--muted);">G-Coins</p>
+                    </div>
+                </div>
+                <div style="margin-bottom:8px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                        <span style="font-size:12px;color:var(--muted);">Progress</span>
+                        <span style="font-size:12px;color:var(--muted);">{{ $milestone['progress'] }} /
+                            {{ $milestone['tier']->required_referrals }}</span>
+                    </div>
+                    <div class="progress-app">
+                        <div class="progress-fill {{ $claimed ? 'green' : '' }}" style="width:{{ $pct }}%;"></div>
+                    </div>
+                    <p style="font-size:11px;color:var(--muted);margin-top:4px;">Need
+                        {{ $milestone['tier']->required_referrals }} active refer members</p>
+                </div>
+
+                @if($claimed)
+                    <div class="badge-app badge-green" style="font-size:12px;padding:8px 14px;width:100%;justify-content:center;">
+                        <i class="fa fa-circle-check" style="margin-right:6px;"></i>
+                        Approved on {{ $milestone['claim']->approved_at?->format('d M Y') }}
+                    </div>
+                @elseif($pending)
+                    <div class="badge-app badge-gold" style="font-size:12px;padding:8px 14px;width:100%;justify-content:center;">
+                        <i class="fa fa-clock" style="margin-right:6px;"></i>Claim under review
+                    </div>
+                @elseif($canClaim)
+                    <button class="btn-app btn-gold claim-btn" style="padding:12px;" data-tier="{{ $milestone['tier']->id }}"
+                        data-name="{{ $milestone['tier']->name }}" data-coins="{{ number_format($milestone['tier']->g_coins) }}">
+                        <i class="fa fa-gift"></i> Claim {{ number_format($milestone['tier']->g_coins) }} G-Coins
+                    </button>
+                @elseif(isset($milestone['eligible']) && $milestone['eligible'] && !$canClaim)
+                    <div style="font-size:12px;color:var(--muted);padding:8px 0;">
+                        <i class="fa fa-lock"
+                            style="margin-right:6px;"></i>{{ $milestone['reason'] ?? 'Claim previous milestone first' }}
+                    </div>
+                @else
+                    <div style="font-size:12px;color:var(--muted);padding:8px 0;">
+                        <i class="fa fa-lock" style="margin-right:6px;"></i>
+                        Need {{ $milestone['tier']->required_referrals - $milestone['progress'] }} more referrals
+                    </div>
+                @endif
+            </div>
+        @endforeach
+    </div>
+
+    {{-- How it works --}}
+    <div class="section-label">How It Works</div>
+    <div style="margin:0 20px;" class="app-card">
+        <div class="list-row">
+            <div class="list-icon blue" style="width:36px;height:36px;border-radius:10px;font-size:16px;"><i
+                    class="fa fa-users"></i></div>
+            <div class="list-body">
+                <div class="title">10 Referrals</div>
+                <div class="sub">First Reward: 10,000 G-Coins</div>
+            </div>
+        </div>
+        <div class="list-row">
+            <div class="list-icon gold" style="width:36px;height:36px;border-radius:10px;font-size:16px;"><i
+                    class="fa fa-trophy"></i></div>
+            <div class="list-body">
+                <div class="title">15 Referrals</div>
+                <div class="sub">Option A: 5,000 G-Coins</div>
+            </div>
+        </div>
+        <div class="list-row">
+            <div class="list-icon teal" style="width:36px;height:36px;border-radius:10px;font-size:16px;"><i
+                    class="fa fa-award"></i></div>
+            <div class="list-body">
+                <div class="title">20 Referrals</div>
+                <div class="sub">Option B: 10,000 G-Coins</div>
+            </div>
+        </div>
+    </div>
+    <div style="margin:12px 20px 0;">
+        <div class="alert-app gold-alert">
+            <i class="fa fa-circle-info" style="color:var(--gold);"></i>
+            <span><strong>10 G-Coins = ₹1 INR</strong> &nbsp;|&nbsp; Lifetime max: 25,000 G-Coins (₹2,500) &nbsp;|&nbsp;
+                Must claim in order.</span>
+        </div>
+    </div>
+
+    <div style="height:8px;"></div>
+
+@endsection
+
+@push('scripts')
     <script>
         $(document).on('click', '.claim-btn', function () {
             var tierId = $(this).data('tier');
             var name = $(this).data('name');
             var coins = $(this).data('coins');
-
             Swal.fire({
+                background: '#0D1626', color: '#fff',
                 title: 'Claim ' + coins + ' G-Coins?',
                 text: name + ' — Your claim will be reviewed by admin.',
-                icon: 'question',
                 showCancelButton: true,
                 confirmButtonText: 'Yes, Claim!',
-                confirmButtonColor: '#28a745',
+                confirmButtonColor: '#F0A500',
+                cancelButtonColor: '#1E2D45',
             }).then(function (result) {
                 if (result.isConfirmed) {
                     $.ajax({
@@ -146,17 +146,15 @@
                         type: 'POST',
                         data: { tier_id: tierId, _token: "{{ csrf_token() }}" },
                         success: function (res) {
-                            if (res.status) {
-                                toastr.success(res.message);
-                                setTimeout(function () { location.reload(); }, 1500);
-                            } else {
-                                toastr.error(res.message);
-                            }
+                            if (res.status) { toastr.success(res.message); setTimeout(function () { location.reload(); }, 1500); }
+                            else toastr.error(res.message);
                         },
-                        error: function () { toastr.error('Something went wrong'); }
+                        error: function () { toastr.error('Something went wrong.'); }
                     });
                 }
             });
         });
     </script>
-@endsection
+@endpush
+
+

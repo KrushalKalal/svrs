@@ -189,5 +189,7 @@ Route::prefix('member')->name('member.')->group(function () {
         Route::get('reports/wallet-ledger', [MemberReportController::class, 'walletLedger'])->name('reports.wallet.ledger');
         Route::get('reports/income', [MemberReportController::class, 'incomeReport'])->name('reports.income');
         Route::get('reports/my-tree', [MemberReportController::class, 'referralTree'])->name('reports.my.tree');
+        Route::get('reports', [MemberReportController::class, 'reports'])->name('reports');
+      
     });
 });

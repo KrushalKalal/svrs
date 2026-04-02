@@ -113,7 +113,13 @@ class CoinController extends Controller
             return view('admin.coin_chart.chart');
         }
 
-        return view('member.coin_chart', compact('wallet', 'coinBalance', 'currentPrice'));
+        // Load trade history for the History tab in the member coin view
+        $trades = CoinTrade::with('coin')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->get();
+
+        return view('member.coin_chart', compact('wallet', 'coinBalance', 'currentPrice', 'trades'));
     }
 
     public function coin_chart(Request $request)

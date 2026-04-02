@@ -97,4 +97,67 @@ class MemberReportController extends Controller
             'level3'
         ));
     }
+
+    public function reports()
+    {
+        $user = auth()->user();
+
+        // Wallet ledger (all members)
+        $wallet = Wallet::where('user_id', $user->id)->first();
+        $walletTransactions = WalletTransaction::where('user_id', $user->id)->latest()->get();
+        $coinTrades = CoinTrade::where('user_id', $user->id)->latest()->get();
+        $referralRewards = ReferralReward::with('fromUser')->where('earner_id', $user->id)->latest()->get();
+        $goldTransactions = GoldCoinTransaction::where('user_id', $user->id)->latest()->get();
+
+        // Income + tree (refer members only)
+        $level1Rewards = collect();
+        $level2Rewards = collect();
+        $level3Rewards = collect();
+        $totalLevel1 = 0;
+        $totalLevel2 = 0;
+        $totalLevel3 = 0;
+        $totalCoins = 0;
+        $treeLevel1 = collect();
+        $treeLevel2 = collect();
+        $treeLevel3 = collect();
+
+        if ($user->is_refer_member) {
+            $level1Rewards = ReferralReward::with('fromUser')
+                ->where('earner_id', $user->id)->where('level', 1)->latest()->get();
+            $level2Rewards = ReferralReward::with('fromUser')
+                ->where('earner_id', $user->id)->where('level', 2)->latest()->get();
+            $level3Rewards = ReferralReward::with('fromUser')
+                ->where('earner_id', $user->id)->where('level', 3)->latest()->get();
+            $totalLevel1 = $level1Rewards->sum('reward_quantity');
+            $totalLevel2 = $level2Rewards->sum('reward_quantity');
+            $totalLevel3 = $level3Rewards->sum('reward_quantity');
+            $totalCoins = $totalLevel1 + $totalLevel2 + $totalLevel3;
+
+            $treeLevel1 = User::where('sponsor_id', $user->member_code)->get();
+            $l1Codes = $treeLevel1->pluck('member_code');
+            $treeLevel2 = User::whereIn('sponsor_id', $l1Codes)->get();
+            $l2Codes = $treeLevel2->pluck('member_code');
+            $treeLevel3 = User::whereIn('sponsor_id', $l2Codes)->get();
+        }
+
+        return view('member.reports.index', compact(
+            'user',
+            'wallet',
+            'walletTransactions',
+            'coinTrades',
+            'referralRewards',
+            'goldTransactions',
+            'level1Rewards',
+            'level2Rewards',
+            'level3Rewards',
+            'totalLevel1',
+            'totalLevel2',
+            'totalLevel3',
+            'totalCoins',
+            'treeLevel1',
+            'treeLevel2',
+            'treeLevel3'
+        ));
+    }
+
 }

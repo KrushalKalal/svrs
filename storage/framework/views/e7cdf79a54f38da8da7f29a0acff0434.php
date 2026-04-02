@@ -1,202 +1,225 @@
 
-<?php $__env->startSection('title', config('app.name') . ' || My Referrals'); ?>
+
+
+<?php $__env->startSection('title', 'Referral Network'); ?>
+<?php $__env->startSection('nav-title', 'Referral Network'); ?>
+<?php $__env->startSection('nav-back'); ?> <?php $__env->stopSection(); ?>
+<?php $__env->startSection('nav-back-url', route('member.profile')); ?>
 
 <?php $__env->startSection('content'); ?>
-    <div class="content">
-        <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-            <div class="my-auto mb-2">
-                <h2 class="mb-1">My Referrals</h2>
-                <nav>
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="javascript:void(0);"><i class="ti ti-smart-home"></i></a></li>
-                        <li class="breadcrumb-item active">My Referrals</li>
-                    </ol>
-                </nav>
-            </div>
-        </div>
+    <?php
+        $user = auth()->user();
+        $activeTab = request('tab', 'overview');
+        $membership = \App\Models\MemberMembership::where('user_id', $user->id)->where('status', 1)->first();
 
-        
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="card bg-primary text-white">
-                    <div class="card-body text-center">
-                        <h6>Level 1 Earnings</h6>
-                        <h3><?php echo e(number_format($earnings[1], 4)); ?> <small style="font-size:14px;">SVRS</small></h3>
-                        <small>0.5% per referral buy</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card bg-success text-white">
-                    <div class="card-body text-center">
-                        <h6>Level 2 Earnings</h6>
-                        <h3><?php echo e(number_format($earnings[2], 4)); ?> <small style="font-size:14px;">SVRS</small></h3>
-                        <small>0.05% per referral buy</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card bg-info text-white">
-                    <div class="card-body text-center">
-                        <h6>Level 3 Earnings</h6>
-                        <h3><?php echo e(number_format($earnings[3], 4)); ?> <small style="font-size:14px;">SVRS</small></h3>
-                        <small>0.01% per referral buy</small>
-                    </div>
-                </div>
-            </div>
-        </div>
+        // already computed in controller — use passed vars with fallback
+        $level1 = $level1 ?? collect();
+        $level2 = $level2 ?? collect();
+        $level3 = $level3 ?? collect();
+        $earnings = $earnings ?? [1 => 0, 2 => 0, 3 => 0];
 
-        
-        <ul class="nav nav-tabs mb-3" id="referralTabs">
-            <li class="nav-item">
-                <a class="nav-link active" data-bs-toggle="tab" href="#treeView">Tree View</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-bs-toggle="tab" href="#level1Tab">Level 1 (<?php echo e($level1->count()); ?>)</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-bs-toggle="tab" href="#level2Tab">Level 2 (<?php echo e($level2->count()); ?>)</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-bs-toggle="tab" href="#level3Tab">Level 3 (<?php echo e($level3->count()); ?>)</a>
-            </li>
-        </ul>
+        $earn1 = $earnings[1] ?? 0;
+        $earn2 = $earnings[2] ?? 0;
+        $earn3 = $earnings[3] ?? 0;
 
-        <div class="tab-content">
+        $allEarnings = \App\Models\ReferralReward::with('fromUser')
+            ->where('earner_id', $user->id)->latest()->get();
+    ?>
 
-            
-            <div class="tab-pane fade show active" id="treeView">
-                <div class="card">
-                    <div class="card-body" style="overflow-x:auto;">
-                        <ul class="tree">
-                            <li>
-                                <span class="tree-node bg-primary text-white">
-                                    <i class="ti ti-user me-1"></i><?php echo e(auth()->user()->full_name); ?><br>
-                                    <small><?php echo e(auth()->user()->member_code); ?></small>
-                                </span>
-                                <?php if($level1->count()): ?>
-                                    <ul>
-                                        <?php $__currentLoopData = $level1; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $l1): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                            <li>
-                                                <span
-                                                    class="tree-node <?php echo e($l1->is_refer_member ? 'bg-success' : 'bg-secondary'); ?> text-white">
-                                                    <i class="ti ti-user me-1"></i><?php echo e($l1->full_name); ?><br>
-                                                    <small><?php echo e($l1->member_code); ?></small>
-                                                </span>
-                                                <?php $l1Children = $level2->where('sponsor_id', $l1->member_code); ?>
-                                                <?php if($l1Children->count()): ?>
-                                                    <ul>
-                                                        <?php $__currentLoopData = $l1Children; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $l2): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                            <li>
-                                                                <span
-                                                                    class="tree-node <?php echo e($l2->is_refer_member ? 'bg-success' : 'bg-secondary'); ?> text-white">
-                                                                    <i class="ti ti-user me-1"></i><?php echo e($l2->full_name); ?><br>
-                                                                    <small><?php echo e($l2->member_code); ?></small>
-                                                                </span>
-                                                                <?php $l2Children = $level3->where('sponsor_id', $l2->member_code); ?>
-                                                                <?php if($l2Children->count()): ?>
-                                                                    <ul>
-                                                                        <?php $__currentLoopData = $l2Children; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $l3): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                                            <li>
-                                                                                <span
-                                                                                    class="tree-node <?php echo e($l3->is_refer_member ? 'bg-success' : 'bg-secondary'); ?> text-white">
-                                                                                    <i class="ti ti-user me-1"></i><?php echo e($l3->full_name); ?><br>
-                                                                                    <small><?php echo e($l3->member_code); ?></small>
-                                                                                </span>
-                                                                            </li>
-                                                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                                                    </ul>
-                                                                <?php endif; ?>
-                                                            </li>
-                                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                                    </ul>
-                                                <?php endif; ?>
-                                            </li>
-                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                    </ul>
-                                <?php endif; ?>
-                            </li>
-                        </ul>
-                        <div class="mt-3">
-                            <span class="badge bg-primary me-2">You</span>
-                            <span class="badge bg-success me-2">Refer Member</span>
-                            <span class="badge bg-secondary">Normal Member</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tab-pane fade" id="level1Tab">
-                <div class="card">
-                    <div class="card-body">
-                        <?php echo $__env->make('member.membership.partials.referral_table', ['members' => $level1, 'level' => 1], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tab-pane fade" id="level2Tab">
-                <div class="card">
-                    <div class="card-body">
-                        <?php echo $__env->make('member.membership.partials.referral_table', ['members' => $level2, 'level' => 2], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tab-pane fade" id="level3Tab">
-                <div class="card">
-                    <div class="card-body">
-                        <?php echo $__env->make('member.membership.partials.referral_table', ['members' => $level3, 'level' => 3], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
-                    </div>
-                </div>
-            </div>
-
+    
+    <div style="padding:16px 20px 0;">
+        <div class="segment-ctrl" id="refNetTabs">
+            <button class="<?php echo e($activeTab === 'overview'  ? 'active' : ''); ?>" onclick="switchRefNet('overview')">Overview</button>
+            <button class="<?php echo e($activeTab === 'team'      ? 'active' : ''); ?>" onclick="switchRefNet('team')">Team</button>
+            <button class="<?php echo e($activeTab === 'earnings'  ? 'active' : ''); ?>" onclick="switchRefNet('earnings')">Earnings</button>
         </div>
     </div>
 
-    <style>
-        .tree {
-            list-style: none;
-            padding: 0;
-        }
+    
+    <div id="refNetOverview" style="<?php echo e($activeTab === 'overview' ? '' : 'display:none;'); ?>">
+        <div style="margin:16px 20px 0;">
+            <div class="gold-card" style="padding:20px;text-align:center;">
+                <p style="font-size:12px;color:rgba(240,165,0,0.7);margin-bottom:8px;letter-spacing:0.5px;">Your Referral Code</p>
+                <div style="font-size:28px;font-weight:800;letter-spacing:4px;font-family:'Space Mono',monospace;color:var(--gold);margin-bottom:16px;">
+                    <?php echo e($membership->refer_code ?? $user->member_code); ?>
 
-        .tree ul {
-            list-style: none;
-            padding-left: 30px;
-            margin-top: 8px;
-            position: relative;
-        }
+                </div>
+                <div style="display:flex;gap:10px;justify-content:center;">
+                    <button onclick="copyText('<?php echo e($membership->refer_code ?? $user->member_code); ?>')"
+                        style="flex:1;padding:10px;border-radius:10px;background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.3);color:var(--gold);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+                        <i class="fa fa-copy"></i> Copy Code
+                    </button>
+                    <?php if($membership && $membership->refer_link): ?>
+                    <button onclick="copyText_val('<?php echo e($membership->refer_link); ?>')"
+                        style="flex:1;padding:10px;border-radius:10px;background:rgba(0,212,170,0.12);border:1px solid rgba(0,212,170,0.3);color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+                        <i class="fa fa-link"></i> Copy Link
+                    </button>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
 
-        .tree ul::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            border-left: 2px dashed #ccc;
-        }
+        <div class="section-label">Statistics</div>
+        <div style="margin:0 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="app-card app-card-inner">
+                <div style="width:36px;height:36px;border-radius:10px;background:rgba(0,212,170,0.12);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--accent);margin-bottom:10px;">
+                    <i class="fa fa-users"></i>
+                </div>
+                <p style="font-size:24px;font-weight:800;color:var(--accent);"><?php echo e($level1->count() + $level2->count() + $level3->count()); ?></p>
+                <p style="font-size:12px;color:var(--muted);">Total Referrals</p>
+            </div>
+            <div class="app-card app-card-inner">
+                <div style="width:36px;height:36px;border-radius:10px;background:rgba(0,212,170,0.12);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--accent);margin-bottom:10px;">
+                    <i class="fa fa-shield-halved"></i>
+                </div>
+                <p style="font-size:24px;font-weight:800;color:var(--accent);"><?php echo e($level1->where('status', 1)->count()); ?></p>
+                <p style="font-size:12px;color:var(--muted);">Active Members</p>
+            </div>
+        </div>
 
-        .tree li {
-            position: relative;
-            padding: 5px 0;
-        }
+        <div class="section-label">How It Works</div>
+        <div style="margin:0 20px;" class="app-card">
+            <?php $__currentLoopData = [
+                ['1', 'gold',        'Level 1', 'Direct referrals — highest reward %'],
+                ['2', 'teal',        'Level 2', "Your referral's referrals"],
+                ['3', 'accent-blue', 'Level 3', 'Third level network'],
+            ]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$num, $color, $title, $desc]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <div class="list-row">
+                <div style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--<?php echo e($color); ?>);flex-shrink:0;border:1.5px solid rgba(240,165,0,0.25);">
+                    <?php echo e($num); ?>
 
-        .tree li::before {
-            content: '';
-            position: absolute;
-            left: -30px;
-            top: 20px;
-            width: 30px;
-            border-top: 2px dashed #ccc;
-        }
+                </div>
+                <div class="list-body">
+                    <div class="title" style="color:var(--<?php echo e($color); ?>);"><?php echo e($title); ?></div>
+                    <div class="sub"><?php echo e($desc); ?></div>
+                </div>
+            </div>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        </div>
+        <div style="height:8px;"></div>
+    </div>
 
-        .tree-node {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            text-align: center;
-            min-width: 120px;
-        }
-    </style>
+    
+    <div id="refNetTeam" style="<?php echo e($activeTab === 'team' ? '' : 'display:none;'); ?>">
+        <div style="padding:12px 20px 0;">
+            <div class="segment-ctrl" id="teamLevelTabs">
+                <button class="active" onclick="switchTeamLevel('l1', this)">L1 (<?php echo e($level1->count()); ?>)</button>
+                <button onclick="switchTeamLevel('l2', this)">L2 (<?php echo e($level2->count()); ?>)</button>
+                <button onclick="switchTeamLevel('l3', this)">L3 (<?php echo e($level3->count()); ?>)</button>
+            </div>
+        </div>
+
+        <?php $__currentLoopData = [['l1', $level1, 1], ['l2', $level2, 2], ['l3', $level3, 3]]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$pid, $members, $lvl]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+        <div id="teamLevel_<?php echo e($pid); ?>" style="<?php echo e($pid === 'l1' ? '' : 'display:none;'); ?>padding:10px 20px 0;">
+            <?php if($members->isEmpty()): ?>
+                <div class="empty-state"><i class="fa fa-users"></i><p>No members at this level</p></div>
+            <?php else: ?>
+                <div class="app-card" style="overflow:hidden;">
+                    <?php $__currentLoopData = $members; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $m): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <div class="list-row">
+                        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#000;flex-shrink:0;">
+                            <?php echo e(strtoupper(substr($m->first_name, 0, 1))); ?>
+
+                        </div>
+                        <div class="list-body">
+                            <div class="title"><?php echo e($m->full_name); ?></div>
+                            <div class="sub" style="font-family:'Space Mono',monospace;font-size:11px;"><?php echo e($m->member_code); ?></div>
+                            <div class="sub">Joined <?php echo e($m->created_at->format('d M Y')); ?></div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+                            <?php if($m->status == 1): ?><span class="badge-app badge-green" style="font-size:10px;">Active</span>
+                            <?php elseif($m->status == 0): ?><span class="badge-app badge-red" style="font-size:10px;">Inactive</span>
+                            <?php else: ?><span class="badge-app badge-gold" style="font-size:10px;">Pending</span><?php endif; ?>
+                            <?php if($m->is_refer_member): ?><span class="badge-app badge-teal" style="font-size:10px;">Refer</span><?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </div>
+            <?php endif; ?>
+        </div>
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        <div style="height:8px;"></div>
+    </div>
+
+    
+    <div id="refNetEarnings" style="<?php echo e($activeTab === 'earnings' ? '' : 'display:none;'); ?>">
+        <div style="margin:16px 20px 0;">
+            <div class="gold-card" style="padding:16px;">
+                <p style="font-size:12px;color:rgba(240,165,0,0.7);text-align:center;margin-bottom:14px;">Total Coin Earnings by Level</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;">
+                    <div>
+                        <p style="font-size:11px;color:rgba(240,165,0,0.7);margin-bottom:4px;">L1</p>
+                        <p style="font-size:20px;font-weight:800;color:var(--gold);"><?php echo e(number_format($earn1, 4)); ?></p>
+                        <p style="font-size:10px;color:var(--muted);">SVRS</p>
+                    </div>
+                    <div style="border-left:1px solid rgba(240,165,0,0.2);border-right:1px solid rgba(240,165,0,0.2);">
+                        <p style="font-size:11px;color:rgba(0,212,170,0.7);margin-bottom:4px;">L2</p>
+                        <p style="font-size:20px;font-weight:800;color:var(--accent);"><?php echo e(number_format($earn2, 4)); ?></p>
+                        <p style="font-size:10px;color:var(--muted);">SVRS</p>
+                    </div>
+                    <div>
+                        <p style="font-size:11px;color:rgba(59,130,246,0.7);margin-bottom:4px;">L3</p>
+                        <p style="font-size:20px;font-weight:800;color:var(--accent-blue);"><?php echo e(number_format($earn3, 4)); ?></p>
+                        <p style="font-size:10px;color:var(--muted);">SVRS</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="padding:12px 20px 0;">
+            <?php if($allEarnings->isEmpty()): ?>
+                <div class="empty-state"><i class="fa fa-coins"></i><p>No referral earnings yet</p></div>
+            <?php else: ?>
+                <div class="app-card" style="overflow:hidden;">
+                    <?php $__currentLoopData = $allEarnings; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $rw): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <div class="list-row">
+                        <div class="list-icon <?php echo e($rw->level == 1 ? 'gold' : ($rw->level == 2 ? 'teal' : 'blue')); ?>" style="width:40px;height:40px;border-radius:12px;font-size:13px;">
+                            L<?php echo e($rw->level); ?>
+
+                        </div>
+                        <div class="list-body">
+                            <div class="title"><?php echo e($rw->fromUser->full_name ?? '—'); ?></div>
+                            <div class="sub"><?php echo e($rw->percentage); ?>% • <?php echo e($rw->created_at->format('d M Y, h:i A')); ?></div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:14px;font-weight:700;color:var(--green);">+<?php echo e(number_format($rw->reward_quantity, 4)); ?></div>
+                            <div style="font-size:11px;color:var(--muted);">SVRS</div>
+                        </div>
+                    </div>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </div>
+            <?php endif; ?>
+        </div>
+        <div style="height:8px;"></div>
+    </div>
+
 <?php $__env->stopSection(); ?>
-<?php echo $__env->make('admin.layout.main-layout', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\Qubeta\svrs\resources\views/member/membership/referrals.blade.php ENDPATH**/ ?>
+
+<?php $__env->startPush('scripts'); ?>
+<script>
+var _refNetActive = '<?php echo e($activeTab); ?>';
+function switchRefNet(tab) {
+    ['overview','team','earnings'].forEach(function(t) {
+        var el = document.getElementById('refNet' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (el) el.style.display = (t === tab) ? '' : 'none';
+    });
+    document.querySelectorAll('#refNetTabs button').forEach(function(b, i) {
+        b.classList.toggle('active', ['overview','team','earnings'][i] === tab);
+    });
+}
+function switchTeamLevel(level, btn) {
+    ['l1','l2','l3'].forEach(function(l) {
+        var el = document.getElementById('teamLevel_' + l);
+        if (el) el.style.display = (l === level) ? '' : 'none';
+    });
+    document.querySelectorAll('#teamLevelTabs button').forEach(function(b){ b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+}
+function copyText_val(val) {
+    navigator.clipboard.writeText(val);
+    if (typeof toastr !== 'undefined') toastr.success('Copied!');
+}
+document.addEventListener('DOMContentLoaded', function() { switchRefNet(_refNetActive); });
+</script>
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('member.layout.app-layout', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\Qubeta\svrs\resources\views/member/membership/referrals.blade.php ENDPATH**/ ?>

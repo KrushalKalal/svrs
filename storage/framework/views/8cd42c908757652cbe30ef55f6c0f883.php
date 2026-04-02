@@ -1,275 +1,193 @@
-
-<?php $__env->startSection('title', config('app.name') . ' || Add New Member'); ?>
+<?php $__env->startSection('title', 'Add New Member'); ?>
+<?php $__env->startSection('nav-title', 'Add New Member'); ?>
+<?php $__env->startSection('nav-back'); ?> <?php $__env->stopSection(); ?>
+<?php $__env->startSection('nav-back-url', route('member.dashboard')); ?>
 
 <?php $__env->startSection('content'); ?>
-    <div class="content">
-        <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-            <div class="my-auto mb-2">
-                <h2 class="mb-1">Add New Member</h2>
-                <nav>
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item">
-                            <a href="<?php echo e(route('member.dashboard')); ?>"><i class="ti ti-smart-home"></i></a>
-                        </li>
-                        <li class="breadcrumb-item active">Add New Member</li>
-                    </ol>
-                </nav>
+
+    
+    <div style="margin:16px 20px 0;">
+        <div class="blue-card" style="padding:14px 16px;display:flex;align-items:flex-start;gap:10px;">
+            <i class="fa fa-circle-info" style="color:var(--accent-blue);font-size:18px;margin-top:2px;flex-shrink:0;"></i>
+            <div>
+                <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Registering under your account</div>
+                <div style="font-size:13px;color:var(--muted);">
+                    New member will be placed under Sponsor ID:
+                    <span class="badge-app badge-blue"
+                        style="font-family:'Space Mono',monospace;margin-left:4px;"><?php echo e(auth()->user()->member_code); ?></span>
+                </div>
+                <?php if(auth()->user()->is_refer_member): ?>
+                    <div style="font-size:12px;color:var(--green);margin-top:4px;">
+                        <i class="fa fa-coins" style="margin-right:4px;"></i>You will earn referral rewards when this member
+                        activates and buys coins.
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
+    </div>
 
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="mb-0"><i class="ti ti-user-plus me-2"></i>Register New Member</h4>
-                    </div>
-                    <div class="card-body">
+    <div style="padding:16px 20px 20px;">
+        <form id="addMemberForm" enctype="multipart/form-data">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="sponsor_id" value="<?php echo e(auth()->user()->member_code); ?>">
 
-                        
-                        <div class="alert alert-info d-flex align-items-start mb-4">
-                            <i class="ti ti-info-circle fs-5 me-2 mt-1"></i>
-                            <div>
-                                <strong>Registering under your account.</strong><br>
-                                New member will be placed under your Sponsor ID:
-                                <span class="badge bg-primary ms-1"><?php echo e(auth('admin')->user()->member_code); ?></span>
-                                <?php if(auth('admin')->user()->is_refer_member): ?>
-                                    <br><small class="text-success mt-1 d-block">
-                                        <i class="ti ti-coins me-1"></i>
-                                        You will earn referral rewards when this member activates and buys coins.
-                                    </small>
-                                <?php endif; ?>
-                            </div>
-                        </div>
+            <div style="margin-bottom:12px;">
+                <label class="input-label">Sponsor ID</label>
+                <input type="text" class="input-app" value="<?php echo e(auth()->user()->member_code); ?>" readonly
+                    style="color:var(--muted);font-family:'Space Mono',monospace;">
+            </div>
 
-                        <form id="addMemberForm" enctype="multipart/form-data">
-                            <?php echo csrf_field(); ?>
-
-                            
-                            <input type="hidden" name="sponsor_id" value="<?php echo e(auth('admin')->user()->member_code); ?>">
-
-                            <div class="row">
-
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Sponsor ID <span
-                                            class="badge bg-secondary ms-1">Auto-filled</span></label>
-                                    <input type="text" class="form-control bg-light fw-bold"
-                                        value="<?php echo e(auth('admin')->user()->member_code); ?>" readonly>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">First Name <span class="text-danger">*</span></label>
-                                    <input type="text" name="first_name" class="form-control" placeholder="First Name">
-                                    <small class="text-danger error-text first_name_error"></small>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Last Name <span class="text-danger">*</span></label>
-                                    <input type="text" name="last_name" class="form-control" placeholder="Last Name">
-                                    <small class="text-danger error-text last_name_error"></small>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Mobile Number <span class="text-danger">*</span></label>
-                                    <input type="text" name="mobile" class="form-control" maxlength="10"
-                                        placeholder="10-digit mobile">
-                                    <small class="text-danger error-text mobile_error"></small>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Email Address <span class="text-danger">*</span></label>
-                                    <input type="email" name="email" class="form-control" placeholder="email@example.com">
-                                    <small class="text-danger error-text email_error"></small>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Password <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <input type="password" name="password" id="passwordField" class="form-control"
-                                            placeholder="Min 6 characters">
-                                        <button class="btn btn-outline-secondary" type="button"
-                                            onclick="togglePass('passwordField', this)">
-                                            <i class="fe fe-eye"></i>
-                                        </button>
-                                    </div>
-                                    <small class="text-danger error-text password_error"></small>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <input type="password" name="password_confirmation" id="confirmPassField"
-                                            class="form-control" placeholder="Repeat password">
-                                        <button class="btn btn-outline-secondary" type="button"
-                                            onclick="togglePass('confirmPassField', this)">
-                                            <i class="fe fe-eye"></i>
-                                        </button>
-                                    </div>
-                                    <small class="text-danger error-text password_confirmation_error"></small>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Deposit Amount (₹) <span class="text-danger">*</span></label>
-                                    <input type="number" name="amount" id="amount" class="form-control"
-                                        min="<?php echo e($deposit->min_amount ?? 200); ?>" max="<?php echo e($deposit->max_amount ?? 2000); ?>"
-                                        placeholder="₹<?php echo e($deposit->min_amount ?? 200); ?> - ₹<?php echo e($deposit->max_amount ?? 2000); ?>">
-                                    <small class="text-muted">Min ₹<?php echo e($deposit->min_amount ?? 200); ?>, Max
-                                        ₹<?php echo e($deposit->max_amount ?? 2000); ?></small>
-                                    <small class="text-danger error-text amount_error"></small>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Payment Screenshot <span class="text-danger">*</span></label>
-                                    <input type="file" name="attachment" class="form-control" accept="image/*"
-                                        id="screenshotInput">
-                                    <small class="text-danger error-text attachment_error"></small>
-                                    <div id="screenshotPreview" class="mt-2 d-none">
-                                        <img id="previewImg" src="" alt="Preview"
-                                            style="max-height:120px;border-radius:6px;border:1px solid #ddd;">
-                                    </div>
-                                </div>
-
-                            </div>
-
-                            <div class="d-flex gap-2 mt-2">
-                                <button type="submit" class="btn btn-primary px-5" id="submitBtn">
-                                    <span class="btn-text"><i class="ti ti-user-plus me-1"></i>Register Member</span>
-                                    <span class="btn-loader d-none"><span
-                                            class="spinner-border spinner-border-sm me-1"></span>Registering...</span>
-                                </button>
-                                <a href="<?php echo e(route('member.dashboard')); ?>" class="btn btn-outline-secondary px-4">Cancel</a>
-                            </div>
-
-                        </form>
-                    </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                <div>
+                    <label class="input-label">First Name <span style="color:var(--red);">*</span></label>
+                    <input type="text" name="first_name" class="input-app" placeholder="First Name">
+                    <small class="error-text first_name_error" style="color:var(--red);font-size:11px;"></small>
                 </div>
+                <div>
+                    <label class="input-label">Last Name <span style="color:var(--red);">*</span></label>
+                    <input type="text" name="last_name" class="input-app" placeholder="Last Name">
+                    <small class="error-text last_name_error" style="color:var(--red);font-size:11px;"></small>
+                </div>
+            </div>
+
+            <div style="margin-bottom:12px;">
+                <label class="input-label">Mobile Number <span style="color:var(--red);">*</span></label>
+                <input type="text" name="mobile" class="input-app" maxlength="10" placeholder="10-digit mobile">
+                <small class="error-text mobile_error" style="color:var(--red);font-size:11px;"></small>
+            </div>
+
+            <div style="margin-bottom:12px;">
+                <label class="input-label">Email Address <span style="color:var(--red);">*</span></label>
+                <input type="email" name="email" class="input-app" placeholder="email@example.com">
+                <small class="error-text email_error" style="color:var(--red);font-size:11px;"></small>
+            </div>
+
+            <div style="margin-bottom:12px;position:relative;">
+                <label class="input-label">Password <span style="color:var(--red);">*</span></label>
+                <input type="password" name="password" id="passField" class="input-app" placeholder="Min 6 characters">
+                <button type="button" onclick="tgPw('passField',this)"
+                    style="position:absolute;right:14px;bottom:14px;background:none;border:none;color:var(--muted);cursor:pointer;"><i
+                        class="fa fa-eye-slash"></i></button>
+                <small class="error-text password_error" style="color:var(--red);font-size:11px;"></small>
+            </div>
+
+            <div style="margin-bottom:12px;position:relative;">
+                <label class="input-label">Confirm Password <span style="color:var(--red);">*</span></label>
+                <input type="password" name="password_confirmation" id="confField" class="input-app"
+                    placeholder="Repeat password">
+                <button type="button" onclick="tgPw('confField',this)"
+                    style="position:absolute;right:14px;bottom:14px;background:none;border:none;color:var(--muted);cursor:pointer;"><i
+                        class="fa fa-eye-slash"></i></button>
+                <small class="error-text password_confirmation_error" style="color:var(--red);font-size:11px;"></small>
+            </div>
+
+            <div style="margin-bottom:12px;">
+                <label class="input-label">Deposit Amount (₹) <span style="color:var(--red);">*</span></label>
+                <input type="number" name="amount" class="input-app" min="<?php echo e($deposit->min_amount ?? 200); ?>"
+                    max="<?php echo e($deposit->max_amount ?? 2000); ?>"
+                    placeholder="₹<?php echo e($deposit->min_amount ?? 200); ?> – ₹<?php echo e($deposit->max_amount ?? 2000); ?>">
+                <small style="color:var(--muted);font-size:11px;">Min ₹<?php echo e($deposit->min_amount ?? 200); ?>, Max
+                    ₹<?php echo e($deposit->max_amount ?? 2000); ?></small>
+                <small class="error-text amount_error" style="color:var(--red);font-size:11px;display:block;"></small>
             </div>
 
             
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="mb-0">Payment Information</h4>
+            <div class="section-label" style="padding:0;margin:16px 0 12px;">Payment Details</div>
+            <div class="app-card" style="margin-bottom:16px;">
+                <?php if(isset($contact) && $contact->qr_image): ?>
+                    <div style="padding:16px;text-align:center;border-bottom:1px solid var(--border2);">
+                        <img src="<?php echo e(asset($contact->qr_image)); ?>"
+                            style="width:130px;border-radius:10px;background:#fff;padding:6px;">
+                        <p style="font-size:12px;color:var(--muted);margin-top:6px;">Scan to Pay</p>
                     </div>
-                    <div class="card-body text-center">
-                        <?php if(isset($contact) && $contact->qr_image): ?>
-                            <img src="<?php echo e(asset($contact->qr_image)); ?>" alt="QR Code" class="img-fluid mb-3"
-                                style="max-width:200px;">
-                            <p class="text-muted">Scan to pay</p>
-                        <?php endif; ?>
-                        <div class="text-start mt-3">
-                            <h6>Bank Transfer</h6>
-                            <ul class="list-unstyled">
-                                <li><strong>Bank:</strong> <?php echo e($contact->bank ?? ''); ?></li>
-                                <li><strong>Account Name:</strong> <?php echo e($contact->account_name ?? ''); ?></li>
-                                <li><strong>Account Number:</strong> <?php echo e($contact->account_number ?? ''); ?></li>
-                                <li><strong>IFSC:</strong> <?php echo e($contact->ifsc_code ?? ''); ?></li>
-                                <li><strong>Branch:</strong> <?php echo e($contact->branch ?? ''); ?></li>
-                            </ul>
-                            <?php if($deposit): ?>
-                                <div class="alert alert-info py-2">
-                                    <strong>Note:</strong> Min ₹<?php echo e($deposit->min_amount); ?>
+                <?php endif; ?>
+                <div style="padding:12px 16px;">
+                    <div class="info-row"><span class="key">Bank</span><span class="val"><?php echo e($contact->bank ?? '—'); ?></span>
+                    </div>
+                    <div class="info-row"><span class="key">Account Name</span><span
+                            class="val"><?php echo e($contact->account_name ?? '—'); ?></span></div>
+                    <div class="info-row" onclick="copyText('<?php echo e($contact->account_number ?? ''); ?>')"
+                        style="cursor:pointer;">
+                        <span class="key">Account No.</span>
+                        <span class="val" style="font-family:'Space Mono',monospace;"><?php echo e($contact->account_number ?? '—'); ?>
 
-                                    <?php if($deposit->max_amount): ?> | Max ₹<?php echo e($deposit->max_amount); ?> <?php endif; ?>
-                                </div>
-                            <?php endif; ?>
-                        </div>
+                            <i class="fa fa-copy" style="font-size:11px;color:var(--muted);"></i></span>
                     </div>
+                    <div class="info-row" onclick="copyText('<?php echo e($contact->ifsc_code ?? ''); ?>')" style="cursor:pointer;">
+                        <span class="key">IFSC</span>
+                        <span class="val" style="font-family:'Space Mono',monospace;"><?php echo e($contact->ifsc_code ?? '—'); ?> <i
+                                class="fa fa-copy" style="font-size:11px;color:var(--muted);"></i></span>
+                    </div>
+                    <div class="info-row" style="border:none;"><span class="key">Branch</span><span
+                            class="val"><?php echo e($contact->branch ?? '—'); ?></span></div>
                 </div>
             </div>
-        </div>
 
-        <?php if(session('new_member')): ?>
-            <?php $nm = session('new_member'); ?>
-            <div class="card border-success mt-3">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="ti ti-circle-check me-2"></i>Member Registered Successfully</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-md-3">
-                            <p class="text-muted mb-1">Member Code</p>
-                            <h5 class="text-primary"><?php echo e($nm['member_code']); ?></h5>
-                        </div>
-                        <div class="col-md-3">
-                            <p class="text-muted mb-1">Name</p>
-                            <h5><?php echo e($nm['name']); ?></h5>
-                        </div>
-                        <div class="col-md-3">
-                            <p class="text-muted mb-1">Mobile</p>
-                            <h5><?php echo e($nm['mobile']); ?></h5>
-                        </div>
-                        <div class="col-md-3">
-                            <p class="text-muted mb-1">Status</p>
-                            <span class="badge bg-warning text-dark fs-6">Pending Activation</span>
-                        </div>
+            <div style="margin-bottom:20px;">
+                <label class="input-label">Payment Screenshot <span style="color:var(--red);">*</span></label>
+                <div class="app-card list-row" style="cursor:pointer;" onclick="document.getElementById('ssInput').click()">
+                    <div class="list-icon blue" style="width:36px;height:36px;border-radius:10px;font-size:15px;"><i
+                            class="fa fa-upload"></i></div>
+                    <div class="list-body">
+                        <div class="title">Upload Payment Screenshot</div>
+                        <div class="sub">Tap to select from gallery</div>
                     </div>
+                    <i class="fa fa-chevron-right list-chevron"></i>
                 </div>
+                <input type="file" id="ssInput" name="attachment" accept="image/*" style="display:none;">
+                <div id="ssPreview" style="display:none;margin-top:10px;text-align:center;">
+                    <img style="max-width:100%;border-radius:10px;max-height:160px;">
+                </div>
+                <small class="error-text attachment_error" style="color:var(--red);font-size:11px;"></small>
             </div>
-        <?php endif; ?>
+
+            <button type="submit" class="btn-app btn-gold" id="submitBtn">
+                <i class="fa fa-user-plus"></i> Register Member
+            </button>
+            <a href="<?php echo e(route('member.dashboard')); ?>" class="btn-app btn-outline-gold"
+                style="margin-top:10px;text-decoration:none;">Cancel</a>
+        </form>
     </div>
 
+<?php $__env->stopSection(); ?>
+
+<?php $__env->startPush('scripts'); ?>
     <script>
-        function togglePass(fieldId, btn) {
-            var f = document.getElementById(fieldId);
-            if (f.type === 'password') {
-                f.type = 'text';
-                btn.innerHTML = '<i class="fe fe-eye-off"></i>';
-            } else {
-                f.type = 'password';
-                btn.innerHTML = '<i class="fe fe-eye"></i>';
-            }
+        function tgPw(id, btn) {
+            var inp = document.getElementById(id);
+            var show = inp.type === 'password';
+            inp.type = show ? 'text' : 'password';
+            btn.innerHTML = show ? '<i class="fa fa-eye"></i>' : '<i class="fa fa-eye-slash"></i>';
         }
-
-        $('#screenshotInput').on('change', function () {
-            var file = this.files[0];
-            if (file) {
-                var reader = new FileReader();
-                reader.onload = function (e) {
-                    $('#previewImg').attr('src', e.target.result);
-                    $('#screenshotPreview').removeClass('d-none');
-                };
-                reader.readAsDataURL(file);
-            }
+        document.getElementById('ssInput').addEventListener('change', function () {
+            if (!this.files[0]) return;
+            var r = new FileReader();
+            r.onload = function (e) {
+                var p = document.getElementById('ssPreview');
+                p.style.display = ''; p.querySelector('img').src = e.target.result;
+            };
+            r.readAsDataURL(this.files[0]);
         });
-
         $('#addMemberForm').on('submit', function (e) {
             e.preventDefault();
             $('.error-text').text('');
-            var formData = new FormData(this);
-            $('#submitBtn .btn-text').addClass('d-none');
-            $('#submitBtn .btn-loader').removeClass('d-none');
-            $('#submitBtn').prop('disabled', true);
-
+            var btn = document.getElementById('submitBtn');
+            btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Registering...';
             $.ajax({
                 url: "<?php echo e(route('member.add.member.store')); ?>",
-                type: 'POST',
-                data: formData,
-                contentType: false,
-                processData: false,
+                type: 'POST', data: new FormData(this),
+                contentType: false, processData: false,
                 success: function (res) {
-                    if (res.status) {
-                        toastr.success(res.message ?? 'Member registered successfully!');
-                        setTimeout(function () { location.reload(); }, 1500);
-                    } else {
-                        toastr.error(res.message ?? 'Something went wrong.');
-                    }
+                    if (res.status) { toastr.success(res.message); setTimeout(function () { location.reload(); }, 1500); }
+                    else toastr.error(res.message);
                 },
                 error: function (xhr) {
-                    if (xhr.status === 422) {
-                        $.each(xhr.responseJSON.errors, function (field, messages) {
-                            $('.' + field + '_error').text(messages[0]);
-                        });
-                    } else {
-                        toastr.error('Server error. Please try again.');
-                    }
+                    if (xhr.status === 422) $.each(xhr.responseJSON.errors, function (f, m) { $('.' + f + '_error').text(m[0]); });
+                    else toastr.error('Server error. Try again.');
                 },
-                complete: function () {
-                    $('#submitBtn .btn-text').removeClass('d-none');
-                    $('#submitBtn .btn-loader').addClass('d-none');
-                    $('#submitBtn').prop('disabled', false);
-                }
+                complete: function () { btn.disabled = false; btn.innerHTML = '<i class="fa fa-user-plus"></i> Register Member'; }
             });
         });
     </script>
-<?php $__env->stopSection(); ?>
-<?php echo $__env->make('admin.layout.main-layout', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\Qubeta\svrs\resources\views/member/add_member.blade.php ENDPATH**/ ?>
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('member.layout.app-layout', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\Qubeta\svrs\resources\views/member/add_member.blade.php ENDPATH**/ ?>

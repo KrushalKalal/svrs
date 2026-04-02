@@ -1,278 +1,305 @@
-@extends('admin.layout.main-layout')
-@section('title', config('app.name') . ' || Coin Chart')
+@extends('member.layout.app-layout')
+@section('title', 'SVRS Coin')
+@section('nav-title', 'SVRS Coin')
+@section('hide-member-code') @endsection
+
+@section('nav-actions')
+    <button class="nav-action-btn" onclick="loadCoinChart(currentFilter)" title="Refresh">
+        <i class="fa fa-rotate-right"></i>
+    </button>
+@endsection
 
 @section('content')
-    <div class="content">
-        <div class="container-fluid">
 
-            <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-                <div class="my-auto mb-2">
-                    <h2 class="mb-1">Coin Chart</h2>
-                    <nav>
-                        <ol class="breadcrumb mb-0">
-                            <li class="breadcrumb-item"><a href="{{ route('member.dashboard') }}"><i
-                                        class="ti ti-smart-home"></i></a></li>
-                            <li class="breadcrumb-item active">Coin Chart</li>
-                        </ol>
-                    </nav>
+    {{-- Segment: Buy / Overview / History --}}
+    <div style="padding:16px 20px 0;">
+        <div class="segment-ctrl">
+            <button class="active" id="tabBuyBtn" onclick="switchCoinTab('buy')">Buy</button>
+            <button id="tabOverviewBtn" onclick="switchCoinTab('overview')">Overview</button>
+            <button id="tabHistBtn" onclick="switchCoinTab('history')">History</button>
+        </div>
+    </div>
+
+    {{-- Live price bar --}}
+    <div style="margin:14px 20px 0;">
+        <div style="background:var(--bg-card2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <p style="font-size:12px;color:var(--muted);margin-bottom:4px;">Live Price</p>
+                    <p style="font-size:28px;font-weight:800;color:var(--gold);" id="livePriceDisplay">
+                        ₹{{ number_format($currentPrice ?? 0, 2) }}
+                    </p>
                 </div>
-                <div class="ms-auto d-flex gap-2">
-                    <span class="badge bg-success  px-3 py-2">
-                        <i class="ti ti-wallet me-1"></i>
-                        Wallet: ₹<span id="walletBalanceTop">{{ number_format($wallet->balance ?? 0, 2) }}</span>
-                    </span>
-                    <span class="badge bg-warning text-dark  px-3 py-2">
-                        <i class="ti ti-coins me-1"></i>
-                        <span id="coinBalanceTop">{{ number_format($coinBalance ?? 0, 4) }}</span> SVRS
-                    </span>
+                <div class="badge-app badge-green" style="font-size:11px;">
+                    <i class="fa fa-circle" style="font-size:7px;margin-right:3px;"></i>LIVE
                 </div>
-            </div>
-
-            <div class="row">
-
-                {{-- Chart --}}
-                <div class="col-md-8">
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h4 class="mb-0">SVRS Coin Price Chart</h4>
-                            <select id="filterType" class="form-select form-select-sm" style="width:160px;">
-                                <option value="today">Today</option>
-                                <option value="week">This Week</option>
-                                <option value="month">This Month</option>
-                                <option value="all">All Time</option>
-                            </select>
-                        </div>
-                        <div class="card-body">
-                            <div id="candleChart" style="height:400px;"></div>
-                        </div>
-                        <div class="card-footer text-muted small">
-                            <i class="ti ti-info-circle me-1"></i>
-                            Selling is temporarily stopped. Only buying is active.
-                        </div>
-                    </div>
+                <div style="text-align:right;">
+                    <p style="font-size:12px;color:var(--muted);margin-bottom:4px;">Your Holdings</p>
+                    <p style="font-size:18px;font-weight:800;">{{ number_format($coinBalance ?? 0, 4) }} SVRS</p>
+                    <p style="font-size:12px;color:var(--muted);">≈
+                        ₹{{ number_format(($coinBalance ?? 0) * ($currentPrice ?? 0), 2) }}</p>
                 </div>
-
-                {{-- Buy Panel --}}
-                <div class="col-md-4">
-                    <div class="card border-success">
-                        <div class="card-header bg-success text-white">
-                            <h5 class="mb-0"><i class="ti ti-shopping-cart me-2"></i>Buy SVRS Coins</h5>
-                        </div>
-                        <div class="card-body">
-
-                            <div class="p-3 bg-light rounded mb-3">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span class="text-muted">Current Price</span>
-                                    <strong class="text-primary" id="currentPriceDisplay">
-                                        ₹{{ number_format($currentPrice ?? 0, 4) }}
-                                    </strong>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <span class="text-muted">Wallet Balance</span>
-                                    <strong class="text-success">
-                                        ₹<span id="walletBalancePanel">{{ number_format($wallet->balance ?? 0, 2) }}</span>
-                                    </strong>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Enter Amount (₹) <span
-                                        class="text-danger">*</span></label>
-                                <input type="number" id="buyAmount" class="form-control form-control-lg"
-                                    placeholder="e.g. 500" min="1" step="1">
-                                <small class="text-danger d-block mt-1" id="amountError"></small>
-                            </div>
-
-                            <div class="p-2 bg-light rounded mb-3">
-                                <div class="d-flex justify-content-between">
-                                    <span class="text-muted">You will receive</span>
-                                    <strong class="text-success" id="coinPreview">0.0000 SVRS</strong>
-                                </div>
-                            </div>
-
-                            <button class="btn btn-success w-100 btn-lg" id="buyBtn">
-                                <span class="btn-text"><i class="ti ti-shopping-cart me-1"></i>Buy Now</span>
-                                <span class="btn-loader d-none">
-                                    <span class="spinner-border spinner-border-sm me-1"></span>Processing...
-                                </span>
-                            </button>
-
-                            <div class="alert alert-info mt-3 mb-0 py-2">
-                                <small>
-                                    <i class="ti ti-info-circle me-1"></i>
-                                    Amount deducted from wallet. Coins credited instantly.
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Portfolio --}}
-                    <div class="card mt-3">
-                        <div class="card-body">
-                            <h6 class="fw-bold mb-3"><i class="ti ti-chart-pie me-1"></i>My Portfolio</h6>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Total Coins</span>
-                                <strong>{{ number_format($coinBalance ?? 0, 4) }} SVRS</strong>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Approx Value</span>
-                                <strong class="text-success">
-                                    ₹{{ number_format(($coinBalance ?? 0) * ($currentPrice ?? 0), 2) }}
-                                </strong>
-                            </div>
-                            <a href="{{ route('member.coin.history') }}"
-                                class="btn btn-outline-secondary btn-sm w-100 mt-2">
-                                <i class="ti ti-history me-1"></i>Trade History
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
     </div>
 
+    {{-- ── BUY TAB ── --}}
+    <div id="panelBuy">
+        <div class="section-label">Price Chart</div>
+        <div style="margin:0 20px;">
+            <div class="app-card" style="padding:16px;">
+                <div class="segment-ctrl" id="chartFilterCtrl" style="margin-bottom:14px;">
+                    <button class="active" onclick="loadCoinChart('today');setChartFilter(this)">TODAY</button>
+                    <button onclick="loadCoinChart('week');setChartFilter(this)">WEEK</button>
+                    <button onclick="loadCoinChart('month');setChartFilter(this)">MONTH</button>
+                    <button onclick="loadCoinChart('all');setChartFilter(this)">ALL</button>
+                </div>
+                <div id="candleChart" style="height:260px;"></div>
+            </div>
+        </div>
+
+        <div class="section-label">Buy SVRS Coins</div>
+        <div style="margin:0 20px;">
+            <div class="app-card app-card-inner">
+                <div class="info-row" style="padding:0 0 12px;border-bottom:1px solid var(--border2);margin-bottom:14px;">
+                    <span class="key">Wallet Balance</span>
+                    <span class="val" style="color:var(--accent);">₹<span
+                            id="walletBal">{{ number_format($wallet->balance ?? 0, 2) }}</span></span>
+                </div>
+                <label class="input-label">Enter Amount (₹)</label>
+                <div style="margin-bottom:10px;">
+                    <input type="number" id="buyAmount" class="input-app" placeholder="e.g. 500" min="1" step="1">
+                    <p style="font-size:12px;color:var(--red);margin-top:4px;display:none;" id="amtError"></p>
+                </div>
+                <div class="app-card app-card-inner"
+                    style="background:var(--bg-card2);margin-bottom:14px;padding:12px 14px;">
+                    <div class="info-row" style="padding:0;border:none;">
+                        <span class="key">You will receive</span>
+                        <span class="val" style="color:var(--green);" id="coinPreview">0.0000 SVRS</span>
+                    </div>
+                </div>
+                <button class="btn-app btn-gold" id="buyBtn" onclick="confirmBuy()">
+                    <i class="fa fa-cart-shopping"></i> Buy Now
+                </button>
+                <div class="alert-app" style="margin:12px 0 0;padding:10px 12px;">
+                    <i class="fa fa-circle-info" style="color:var(--accent-blue);"></i>
+                    <span>Amount deducted from wallet. Coins credited instantly.</span>
+                </div>
+            </div>
+        </div>
+        <div style="height:8px;"></div>
+    </div>
+
+    {{-- ── OVERVIEW TAB ── --}}
+    <div id="panelOverview" style="display:none;">
+        <div class="section-label">My Portfolio</div>
+        <div style="margin:0 20px;" class="app-card">
+            <div class="info-row px" style="padding-top:14px;">
+                <span class="key">Total Coins</span>
+                <span class="val">{{ number_format($coinBalance ?? 0, 4) }} SVRS</span>
+            </div>
+            <div class="info-row px">
+                <span class="key">Approx Value</span>
+                <span class="val"
+                    style="color:var(--green);">₹{{ number_format(($coinBalance ?? 0) * ($currentPrice ?? 0), 2) }}</span>
+            </div>
+            <div class="info-row px" style="padding-bottom:14px;">
+                <span class="key">Current Price</span>
+                <span class="val" style="color:var(--gold);">₹{{ number_format($currentPrice ?? 0, 4) }}</span>
+            </div>
+        </div>
+        <div style="height:8px;"></div>
+    </div>
+
+    {{-- ── HISTORY TAB ── loaded from $trades passed by CoinController@coin --}}
+    <div id="panelHistory" style="display:none;">
+        <div style="padding:16px 20px 0;">
+            @if(isset($trades) && $trades->count())
+                <div class="app-card" style="overflow:hidden;">
+                    @foreach($trades as $trade)
+                        <div class="list-row">
+                            <div class="list-icon {{ $trade->type === 'buy' ? 'green' : ($trade->type === 'reward' ? 'gold' : 'red') }}"
+                                style="width:40px;height:40px;border-radius:12px;font-size:15px;">
+                                <i
+                                    class="fa fa-{{ $trade->type === 'buy' ? 'arrow-down' : ($trade->type === 'reward' ? 'gift' : 'arrow-up') }}"></i>
+                            </div>
+                            <div class="list-body">
+                                <div class="title">{{ ucfirst($trade->type) }}
+                                    @if($trade->type === 'buy')
+                                        <span class="badge-app badge-green" style="font-size:10px;margin-left:4px;">BUY</span>
+                                    @elseif($trade->type === 'reward')
+                                        <span class="badge-app badge-gold" style="font-size:10px;margin-left:4px;">REWARD</span>
+                                    @endif
+                                </div>
+                                <div class="sub">{{ $trade->created_at->format('d M Y, h:i A') }}</div>
+                                <div class="sub">{{ $trade->coin->name ?? 'SVRS' }}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:14px;font-weight:700;color:var(--white);">
+                                    {{ number_format($trade->quantity, 4) }} SVRS
+                                </div>
+                                <div style="font-size:12px;color:var(--muted);">₹{{ number_format($trade->price, 2) }}/coin</div>
+                                <div style="font-size:12px;color:var(--muted);">
+                                    Total: ₹{{ number_format($trade->price * $trade->quantity, 2) }}
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="empty-state">
+                    <i class="fa fa-clock-rotate-left"></i>
+                    <p>No trade history yet</p>
+                </div>
+            @endif
+        </div>
+        <div style="height:8px;"></div>
+    </div>
+
+@endsection
+
+@push('styles')
+    <style>
+        #candleChart .apexcharts-canvas {
+            background: transparent !important;
+        }
+    </style>
+@endpush
+
+@push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script>
         var currentPrice = {{ $currentPrice ?? 0 }};
         var walletBalance = {{ $wallet->balance ?? 0 }};
-
-        // ── Chart ──────────────────────────────────────────────
+        var currentFilter = 'today';
         window.coinChart = null;
-        window.currentFilterType = 'today';
 
-        function loadCoinChart(type) {
-            window.currentFilterType = type;
-            $.ajax({
-                url: "{{ route('member.coin.chart') }}",
-                method: "GET",
-                data: { type: type },
-                success: function (res) {
-                    if (!res.status || res.data.length === 0) {
-                        $("#candleChart").html('<div class="text-center text-muted py-5">No chart data available.</div>');
-                        return;
-                    }
-
-                    // Update current price from latest candle close
-                    var last = res.data[res.data.length - 1];
-                    currentPrice = last.y[3];
-                    $('#currentPriceDisplay').text('₹' + currentPrice.toFixed(4));
-                    recalculate();
-
-                    if (window.coinChart) { window.coinChart.destroy(); }
-
-                    var options = {
-                        series: [{ data: res.data }],
-                        chart: { type: 'candlestick', height: 400, toolbar: { show: true } },
-                        title: { text: 'SVRS Price Movement', align: 'left' },
-                        xaxis: { type: 'datetime', labels: { datetimeUTC: false, format: 'dd MMM HH:mm' } },
-                        yaxis: { labels: { formatter: val => '₹ ' + val.toFixed(4) } },
-                        plotOptions: {
-                            candlestick: { colors: { upward: '#00B746', downward: '#EF403C' } }
-                        }
-                    };
-
-                    window.coinChart = new ApexCharts(document.querySelector("#candleChart"), options);
-                    window.coinChart.render();
-                },
-                error: function () { toastr.error("Chart load failed."); }
+        // Tab switcher
+        function switchCoinTab(tab) {
+            ['buy', 'overview', 'history'].forEach(function (t) {
+                document.getElementById('panel' + t.charAt(0).toUpperCase() + t.slice(1)).style.display = (t === tab) ? '' : 'none';
+                document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1) + 'Btn').classList.toggle('active', t === tab);
             });
         }
 
-        $(document).ready(function () { loadCoinChart('today'); });
-
-        $('#filterType').on('change', function () { loadCoinChart($(this).val()); });
-
-        // Auto refresh every 5 min
-        setInterval(function () { loadCoinChart(window.currentFilterType); }, 300000);
-
-        // ── Buy Logic ──────────────────────────────────────────
-        function recalculate() {
-            var amount = parseFloat($('#buyAmount').val()) || 0;
-            var coins = currentPrice > 0 ? (amount / currentPrice) : 0;
-            $('#coinPreview').text(coins.toFixed(4) + ' SVRS');
+        function setChartFilter(btn) {
+            document.querySelectorAll('#chartFilterCtrl button').forEach(function (b) { b.classList.remove('active'); });
+            btn.classList.add('active');
         }
 
-        $('#buyAmount').on('input keyup change', function () {
-            var amount = parseFloat($(this).val()) || 0;
-            $('#amountError').text('');
-            if (amount > walletBalance) {
-                $('#amountError').text('Insufficient balance. Available: ₹' + walletBalance.toFixed(2));
+        function loadCoinChart(type) {
+            currentFilter = type;
+            $.ajax({
+                url: "{{ route('member.coin.chart') }}",
+                data: { type: type },
+                success: function (res) {
+                    if (!res.status || !res.data.length) {
+                        document.getElementById('candleChart').innerHTML =
+                            '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:13px;">No data available</div>';
+                        return;
+                    }
+                    var last = res.data[res.data.length - 1];
+                    currentPrice = last.y[3];
+                    document.getElementById('livePriceDisplay').textContent = '₹' + currentPrice.toFixed(2);
+                    recalculate();
+
+                    if (window.coinChart) window.coinChart.destroy();
+                    window.coinChart = new ApexCharts(document.querySelector('#candleChart'), {
+                        series: [{ data: res.data }],
+                        chart: {
+                            type: 'candlestick', height: 260,
+                            background: 'transparent',
+                            toolbar: { show: false },
+                            animations: { enabled: true, speed: 400 }
+                        },
+                        theme: { mode: 'dark' },
+                        grid: { borderColor: '#1E2D45', strokeDashArray: 4 },
+                        xaxis: {
+                            type: 'datetime',
+                            labels: { style: { colors: '#6B7A9A', fontSize: '10px' }, datetimeUTC: false }
+                        },
+                        yaxis: {
+                            labels: {
+                                style: { colors: '#6B7A9A', fontSize: '10px' },
+                                formatter: function (v) { return '₹' + v.toFixed(2); }
+                            }
+                        },
+                        plotOptions: {
+                            candlestick: { colors: { upward: '#10B981', downward: '#EF4444' }, wick: { useFillColor: true } }
+                        },
+                        tooltip: { theme: 'dark' }
+                    });
+                    window.coinChart.render();
+                }
+            });
+        }
+
+        function recalculate() {
+            var amt = parseFloat(document.getElementById('buyAmount').value) || 0;
+            var coins = currentPrice > 0 ? amt / currentPrice : 0;
+            document.getElementById('coinPreview').textContent = coins.toFixed(4) + ' SVRS';
+        }
+
+        document.getElementById('buyAmount').addEventListener('input', function () {
+            var amt = parseFloat(this.value) || 0;
+            var errEl = document.getElementById('amtError');
+            if (amt > walletBalance) {
+                errEl.style.display = '';
+                errEl.textContent = 'Insufficient balance. Available: ₹' + walletBalance.toFixed(2);
+            } else {
+                errEl.style.display = 'none';
             }
             recalculate();
         });
 
-        $('#buyBtn').on('click', function () {
-            var amount = parseFloat($('#buyAmount').val()) || 0;
-            $('#amountError').text('');
-
-            if (amount <= 0) {
-                $('#amountError').text('Please enter a valid amount.');
-                return;
-            }
-            if (amount > walletBalance) {
-                $('#amountError').text('Insufficient balance. Available: ₹' + walletBalance.toFixed(2));
-                return;
-            }
-            if (currentPrice <= 0) {
-                toastr.error('Coin price not available. Please refresh.');
-                return;
-            }
-
-            var quantity = amount / currentPrice;
+        function confirmBuy() {
+            var amt = parseFloat(document.getElementById('buyAmount').value) || 0;
+            if (amt <= 0) { toastr.error('Enter a valid amount.'); return; }
+            if (amt > walletBalance) { toastr.error('Insufficient balance.'); return; }
+            if (currentPrice <= 0) { toastr.error('Price unavailable. Refresh.'); return; }
+            var qty = amt / currentPrice;
 
             Swal.fire({
+                background: '#0D1626', color: '#fff',
                 title: 'Confirm Purchase',
-                html: `
-                            <div class="text-start">
-                                <p>Amount: <strong>₹${amount.toFixed(2)}</strong></p>
-                                <p>Price: <strong>₹${currentPrice.toFixed(4)}</strong></p>
-                                <p>You will receive: <strong>${quantity.toFixed(4)} SVRS</strong></p>
-                            </div>`,
-                icon: 'question',
+                html: '<div style="text-align:left;font-size:14px;">' +
+                    '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1E2D45;"><span style="color:#6B7A9A;">Amount</span><strong>₹' + amt.toFixed(2) + '</strong></div>' +
+                    '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1E2D45;"><span style="color:#6B7A9A;">Price/Coin</span><strong style="color:#F0A500;">₹' + currentPrice.toFixed(4) + '</strong></div>' +
+                    '<div style="display:flex;justify-content:space-between;padding:10px 0;"><span style="color:#6B7A9A;">You receive</span><strong style="color:#10B981;">' + qty.toFixed(4) + ' SVRS</strong></div></div>',
                 showCancelButton: true,
                 confirmButtonText: 'Confirm Buy',
-                confirmButtonColor: '#198754',
-            }).then(function (result) {
-                if (!result.isConfirmed) return;
-
-                $('#buyBtn .btn-text').addClass('d-none');
-                $('#buyBtn .btn-loader').removeClass('d-none');
-                $('#buyBtn').prop('disabled', true);
-
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#F0A500',
+                cancelButtonColor: '#1E2D45',
+            }).then(function (r) {
+                if (!r.isConfirmed) return;
+                var btn = document.getElementById('buyBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spin"></span> Processing...';
                 $.ajax({
                     url: "{{ route('member.coin.trade') }}",
                     type: 'POST',
-                    data: {
-                        _token: "{{ csrf_token() }}",
-                        type: 'buy',
-                        price: currentPrice,
-                        quantity: quantity,
-                    },
+                    data: { _token: "{{ csrf_token() }}", type: 'buy', price: currentPrice, quantity: qty },
                     success: function (res) {
                         if (res.status) {
-                            toastr.success(res.message ?? 'Coins purchased successfully!');
-                            walletBalance -= amount;
-                            $('#walletBalanceTop').text(walletBalance.toFixed(2));
-                            $('#walletBalancePanel').text(walletBalance.toFixed(2));
-                            $('#buyAmount').val('');
-                            $('#coinPreview').text('0.0000 SVRS');
+                            toastr.success(res.message);
+                            walletBalance -= amt;
+                            document.getElementById('walletBal').textContent = walletBalance.toFixed(2);
+                            document.getElementById('buyAmount').value = '';
+                            document.getElementById('coinPreview').textContent = '0.0000 SVRS';
                             setTimeout(function () { location.reload(); }, 1500);
-                        } else {
-                            toastr.error(res.message ?? 'Something went wrong.');
-                        }
+                        } else { toastr.error(res.message); }
                     },
-                    error: function (xhr) {
-                        var msg = xhr.responseJSON?.message ?? 'Server error.';
-                        toastr.error(msg);
-                    },
+                    error: function (xhr) { toastr.error(xhr.responseJSON?.message || 'Error'); },
                     complete: function () {
-                        $('#buyBtn .btn-text').removeClass('d-none');
-                        $('#buyBtn .btn-loader').addClass('d-none');
-                        $('#buyBtn').prop('disabled', false);
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa fa-cart-shopping"></i> Buy Now';
                     }
                 });
             });
-        });
+        }
+
+        $(document).ready(function () { loadCoinChart('today'); });
+        setInterval(function () { loadCoinChart(currentFilter); }, 300000);
     </script>
-@endsection
+@endpush

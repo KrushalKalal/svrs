@@ -142,6 +142,67 @@ class MemberController extends Controller
         ]);
     }
 
+    // public function member_update_status(Request $request)
+    // {
+    //     $request->validate([
+    //         'id' => 'required|exists:users,id',
+    //         'status' => 'required|in:0,1',
+    //     ]);
+
+    //     try {
+    //         $member = User::findOrFail($request->id);
+    //         $member->status = $request->status;
+    //         $member->save();
+
+    //         if ($request->status == 1) {
+
+    //             // Credit registration deposit to wallet on activation
+    //             $alreadyCredited = WalletTransaction::where('user_id', $member->id)
+    //                 ->where('remark', 'Registration Deposit')
+    //                 ->where('status', 1)
+    //                 ->exists();
+
+    //             if (!$alreadyCredited && $member->amount > 0) {
+    //                 $wallet = Wallet::firstOrCreate(
+    //                     ['user_id' => $member->id],
+    //                     ['balance' => 0]
+    //                 );
+
+    //                 $wallet->balance += $member->amount;
+    //                 $wallet->save();
+
+    //                 WalletTransaction::create([
+    //                     'wallet_id' => $wallet->id,
+    //                     'user_id' => $member->id,
+    //                     'amount' => $member->amount,
+    //                     'type' => 'credit',
+    //                     'remark' => 'Registration Deposit',
+    //                     'invoice' => $member->attachment,
+    //                     'status' => 1,
+    //                 ]);
+    //             }
+
+    //             // Phase 2: fire referral rewards if already a refer member
+    //             if ($member->is_refer_member == 1) {
+    //                 $this->rewardService->processRewards($member);
+    //             }
+    //         }
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => $request->status == 1
+    //                 ? 'Member Activated Successfully'
+    //                 : 'Member Deactivated Successfully',
+    //         ]);
+
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Something went wrong: ' . $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+
     public function member_update_status(Request $request)
     {
         $request->validate([
@@ -155,34 +216,13 @@ class MemberController extends Controller
             $member->save();
 
             if ($request->status == 1) {
+                // Create wallet with 0 balance if not exists (no registration deposit)
+                Wallet::firstOrCreate(
+                    ['user_id' => $member->id],
+                    ['balance' => 0]
+                );
 
-                // Credit registration deposit to wallet on activation
-                $alreadyCredited = WalletTransaction::where('user_id', $member->id)
-                    ->where('remark', 'Registration Deposit')
-                    ->where('status', 1)
-                    ->exists();
-
-                if (!$alreadyCredited && $member->amount > 0) {
-                    $wallet = Wallet::firstOrCreate(
-                        ['user_id' => $member->id],
-                        ['balance' => 0]
-                    );
-
-                    $wallet->balance += $member->amount;
-                    $wallet->save();
-
-                    WalletTransaction::create([
-                        'wallet_id' => $wallet->id,
-                        'user_id' => $member->id,
-                        'amount' => $member->amount,
-                        'type' => 'credit',
-                        'remark' => 'Registration Deposit',
-                        'invoice' => $member->attachment,
-                        'status' => 1,
-                    ]);
-                }
-
-                // Phase 2: fire referral rewards if already a refer member
+                // Process referral rewards only if this member is marked as refer member
                 if ($member->is_refer_member == 1) {
                     $this->rewardService->processRewards($member);
                 }

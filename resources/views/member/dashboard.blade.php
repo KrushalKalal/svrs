@@ -1,244 +1,217 @@
-@extends('admin.layout.main-layout')
-@section('title', config('app.name') . ' || Dashboard')
+@extends('member.layout.app-layout')
+@section('title', 'Dashboard — SVRS Coin')
+@section('nav-title', 'Dashboard')
+{{-- No nav-back on dashboard --}}
 
 @section('content')
-    <div class="content">
-        <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-            <div class="my-auto mb-2">
-                <h2 class="mb-1">Dashboard</h2>
-                <nav>
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="javascript:void(0);"><i class="ti ti-smart-home"></i></a></li>
-                        <li class="breadcrumb-item active">Dashboard</li>
-                    </ol>
-                </nav>
-            </div>
-            <div class="ms-auto">
-                <span class="badge bg-{{ $user->status == 1 ? 'success' : 'warning' }}  px-3 py-2">
-                    {{ $user->status == 1 ? 'Active' : 'Pending Activation' }}
-                </span>
+
+    {{-- Welcome header + member code --}}
+    <div class="px py"
+        style="padding-bottom: 0; display:flex; align-items:center; justify-content:space-between; padding-top:20px;">
+        <div>
+            <p style="font-size:13px; color:var(--muted); margin-bottom:2px;">Welcome back</p>
+            <h2 style="font-size:22px; font-weight:800;">{{ $user->first_name }} {{ $user->last_name }}</h2>
+        </div>
+        <div class="stat-pill {{ $user->status == 1 ? 'green' : 'gold' }}">
+            <i class="fa fa-circle" style="font-size:7px;"></i>
+            {{ $user->status == 1 ? 'Active' : 'Pending' }}
+        </div>
+    </div>
+
+    {{-- Refer & Earn upgrade banner (only if not refer member) --}}
+    @if(!$user->is_refer_member)
+        <div style="margin-top:16px;">
+            <a href="{{ route('member.membership') }}" class="upgrade-banner">
+                <div class="ub-icon"><i class="fa fa-medal"></i></div>
+                <div class="ub-body">
+                    <div class="ub-title">Upgrade to Refer &amp; Earn</div>
+                    <div class="ub-sub">Unlock referrals, gold rewards &amp; milestones</div>
+                </div>
+                <i class="fa fa-chevron-right ub-arrow"></i>
+            </a>
+        </div>
+    @else
+        <div style="margin: 16px 20px 0;">
+            <div class="accent-card" style="padding:14px 16px; display:flex; align-items:center; gap:10px;">
+                <div
+                    style="width:36px;height:36px;border-radius:10px;background:rgba(0,212,170,0.15);display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:18px;">
+                    <i class="fa fa-circle-check"></i>
+                </div>
+                <div>
+                    <div style="font-size:14px;font-weight:700;">Refer &amp; Earn Active</div>
+                    <div style="font-size:12px;color:var(--muted);">Earn coins on every referral buy</div>
+                </div>
                 @if($user->is_refer_member)
-                    <span class="badge bg-primary  px-3 py-2 ms-1">
-                        <i class="ti ti-share me-1"></i>Refer and Earn Active
-                    </span>
+                    <div class="badge-app badge-teal" style="margin-left:auto;">Active</div>
                 @endif
             </div>
         </div>
+    @endif
 
-        {{-- Stat Cards --}}
-        <div class="row">
-
-            <div class="col-xl-3 col-sm-6">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <p class="text-muted mb-1">Wallet Balance</p>
-                                <h4 class="mb-0">&#8377;{{ number_format($wallet->balance ?? 0, 2) }}</h4>
-                            </div>
-                            <div class="avatar bg-soft-primary rounded-circle">
-                                <i class="ti ti-wallet text-primary"></i>
-                            </div>
-                        </div>
-                        <a href="{{ route('member.my.wallet') }}" class="btn btn-sm btn-outline-primary mt-3 w-100">View
-                            Wallet</a>
-                    </div>
-                </div>
+    {{-- Quick Actions --}}
+    <div class="section-label">Quick Actions</div>
+    <div class="quick-grid">
+        <a href="{{ route('member.coin') }}" class="quick-card">
+            <div class="qc-icon" style="background:rgba(240,165,0,0.12);color:var(--gold);">
+                <i class="fa fa-bitcoin-sign"></i>
             </div>
-
-            <div class="col-xl-3 col-sm-6">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <p class="text-muted mb-1">Coin Balance</p>
-                                <h4 class="mb-0">{{ number_format($coinBalance, 4) }} <small
-                                        class="text-muted">SVRS</small></h4>
-                                <small class="text-success">approx &#8377;{{ number_format($coinValue, 2) }}</small>
-                            </div>
-                            <div class="avatar bg-soft-warning rounded-circle">
-                                <i class="ti ti-coins  text-warning"></i>
-                            </div>
-                        </div>
-                        <a href="{{ route('member.coin') }}" class="btn btn-sm btn-outline-warning mt-3 w-100">Trade
-                            Coins</a>
-                    </div>
-                </div>
+            <div class="qc-body">
+                <div class="qc-title">Buy Coin</div>
+                <div class="qc-sub">Trade SVRS</div>
             </div>
+            <i class="fa fa-chevron-right qc-arrow"></i>
+        </a>
 
-            <div class="col-xl-3 col-sm-6">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <p class="text-muted mb-1">Total Referrals</p>
-                                <h4 class="mb-0">{{ $totalReferrals }}</h4>
-                                <small class="text-success">{{ $activeReferrals }} Active Refer Members</small>
-                            </div>
-                            <div class="avatar bg-soft-success rounded-circle">
-                                <i class="ti ti-users  text-success"></i>
-                            </div>
-                        </div>
-                        @if($user->is_refer_member)
-                            <a href="{{ route('member.my.referrals') }}" class="btn btn-sm btn-outline-success mt-3 w-100">View
-                                Referrals</a>
-                        @else
-                            <a href="{{ route('member.membership') }}"
-                                class="btn btn-sm btn-outline-secondary mt-3 w-100">Unlock Referrals</a>
-                        @endif
-                    </div>
-                </div>
+        <a href="{{ route('member.my.wallet') }}" class="quick-card">
+            <div class="qc-icon" style="background:rgba(0,212,170,0.12);color:var(--accent);">
+                <i class="fa fa-wallet"></i>
             </div>
-
-            <div class="col-xl-3 col-sm-6">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <p class="text-muted mb-1">Referral Earnings</p>
-                                <h4 class="mb-0">{{ number_format($referralEarnings, 4) }} <small
-                                        class=" text-muted">SVRS</small></h4>
-                            </div>
-                            <div class="avatar bg-soft-info rounded-circle">
-                                <i class="ti ti-share  text-info"></i>
-                            </div>
-                        </div>
-                        @if($user->is_refer_member)
-                            <a href="{{ route('member.reports.income') }}" class="btn btn-sm btn-outline-info mt-3 w-100">Income
-                                Report</a>
-                        @else
-                            <div class="mt-3 text-center"><small class="text-muted">Pay &#8377;519 to unlock</small></div>
-                        @endif
-                    </div>
-                </div>
+            <div class="qc-body">
+                <div class="qc-title">My Wallet</div>
+                <div class="qc-sub">₹{{ number_format($wallet->balance ?? 0, 2) }}</div>
             </div>
+            <i class="fa fa-chevron-right qc-arrow"></i>
+        </a>
 
-        </div>
-
-        <div class="row">
-
-            {{-- Gold Coin Wallet --}}
-            @if($user->is_refer_member)
-                <div class="col-md-4">
-                    <div class="card border-warning">
-                        <div class="card-header bg-warning text-dark">
-                            <h5 class="mb-0"><i class="ti ti-coin me-2"></i>Gold Coin Wallet</h5>
-                        </div>
-                        <div class="card-body text-center">
-                            <h2 style="color:#f0a500;">{{ number_format($goldWallet->balance ?? 0) }}</h2>
-                            <p class="text-muted mb-1">G-Coins</p>
-                            <p class="text-success fw-bold">approx
-                                &#8377;{{ number_format(($goldWallet->balance ?? 0) / 10, 2) }} INR</p>
-                            <div class="d-flex gap-2">
-                                <a href="{{ route('member.my.rewards') }}" class="btn btn-warning btn-sm flex-fill">Claim
-                                    Rewards</a>
-                                <a href="{{ route('member.gold.wallet') }}"
-                                    class="btn btn-outline-warning btn-sm flex-fill">Wallet</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            {{-- Membership Status --}}
-            <div class="col-md-{{ $user->is_refer_member ? '4' : '6' }}">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="ti ti-id-badge me-2"></i>Membership Status</h5>
-                    </div>
-                    <div class="card-body">
-                        @if($user->is_refer_member)
-                            <div class="text-center py-2">
-                                <i class="ti ti-circle-check fs-1 text-success"></i>
-                                <p class="mt-2 mb-1 fw-bold text-success">Refer and Earn Active</p>
-                                <p class="text-muted small">You are eligible to refer members and earn coin rewards</p>
-                                <a href="{{ route('member.membership') }}" class="btn btn-sm btn-success">View Details</a>
-                            </div>
-                        @else
-                            <div class="text-center py-2">
-                                <i class="ti ti-lock fs-1 text-secondary"></i>
-                                <p class="mt-2 mb-1 fw-bold">Refer and Earn Locked</p>
-                                <p class="text-muted small">Pay &#8377;519 one-time fee to unlock referral features and earn
-                                    SVRS coins</p>
-                                <a href="{{ route('member.membership') }}" class="btn btn-sm btn-primary">Unlock Now —
-                                    &#8377;519</a>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-            {{-- Quick Links --}}
-            <div class="col-md-{{ $user->is_refer_member ? '4' : '6' }}">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="ti ti-grid-dots me-2"></i>Quick Links</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="list-group list-group-flush">
-                            <a href="{{ route('member.coin') }}"
-                                class="list-group-item list-group-item-action d-flex align-items-center py-2">
-                                <i class="fe fe-dollar-sign me-2 text-primary"></i> Coin Chart and Trade
-                            </a>
-                            <a href="{{ route('member.my.wallet') }}"
-                                class="list-group-item list-group-item-action d-flex align-items-center py-2">
-                                <i class="fe fe-credit-card me-2 text-success"></i> My Wallet
-                            </a>
-                            <a href="{{ route('member.add.member') }}"
-                                class="list-group-item list-group-item-action d-flex align-items-center py-2">
-                                <i class="ti ti-user-plus me-2 text-info"></i> Add New Member
-                            </a>
-                            <a href="{{ route('member.customer.support') }}"
-                                class="list-group-item list-group-item-action d-flex align-items-center py-2">
-                                <i class="fe fe-headphones me-2 text-warning"></i> Customer Support
-                            </a>
-                            <a href="{{ route('member.profile') }}"
-                                class="list-group-item list-group-item-action d-flex align-items-center py-2">
-                                <i class="fe fe-user me-2 text-secondary"></i> My Profile
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        {{-- Milestone Progress --}}
         @if($user->is_refer_member)
-            <div class="card mt-2">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="ti ti-trophy me-2"></i>Gold Coin Milestone Progress</h5>
+            <a href="{{ route('member.add.member') }}" class="quick-card">
+                <div class="qc-icon" style="background:rgba(59,130,246,0.12);color:var(--accent-blue);">
+                    <i class="fa fa-user-plus"></i>
                 </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        @php
-                            $milestones = [
-                                ['name' => 'First Reward', 'need' => 10, 'coins' => 10000],
-                                ['name' => 'Option A', 'need' => 15, 'coins' => 5000],
-                                ['name' => 'Option B', 'need' => 20, 'coins' => 10000],
-                            ];
-                        @endphp
-                        @foreach($milestones as $m)
-                            <div class="col-md-4">
-                                <p class="mb-1 fw-bold">{{ $m['name'] }}</p>
-                                <small class="text-muted">{{ number_format($m['coins']) }} G-Coins on {{ $m['need'] }}
-                                    referrals</small>
-                                <div class="progress mt-2" style="height:12px;">
-                                    @php $pct = min(100, ($activeReferrals / $m['need']) * 100); @endphp
-                                    <div class="progress-bar bg-{{ $pct >= 100 ? 'success' : 'warning' }}"
-                                        style="width:{{ $pct }}%"></div>
-                                </div>
-                                <small class="text-muted">{{ $activeReferrals }} / {{ $m['need'] }}</small>
-                            </div>
-                        @endforeach
-                    </div>
-                    <div class="text-center mt-3">
-                        <a href="{{ route('member.my.rewards') }}" class="btn btn-warning">View All Milestones and
-                            Claim</a>
-                    </div>
+                <div class="qc-body">
+                    <div class="qc-title">Add Me...</div>
+                    <div class="qc-sub">Register u...</div>
                 </div>
-            </div>
-        @endif
+                <i class="fa fa-chevron-right qc-arrow"></i>
+            </a>
 
+            <a href="{{ route('member.reports') }}" class="quick-card">
+                <div class="qc-icon" style="background:rgba(16,185,129,0.12);color:var(--green);">
+                    <i class="fa fa-chart-bar"></i>
+                </div>
+                <div class="qc-body">
+                    <div class="qc-title">Reports</div>
+                    <div class="qc-sub">Income &amp; ...</div>
+                </div>
+                <i class="fa fa-chevron-right qc-arrow"></i>
+            </a>
+        @else
+            <a href="{{ route('member.profile') }}" class="quick-card">
+                <div class="qc-icon" style="background:rgba(59,130,246,0.12);color:var(--accent-blue);">
+                    <i class="fa fa-user"></i>
+                </div>
+                <div class="qc-body">
+                    <div class="qc-title">My Profile</div>
+                    <div class="qc-sub">View &amp; edit...</div>
+                </div>
+                <i class="fa fa-chevron-right qc-arrow"></i>
+            </a>
+
+            <a href="{{ route('member.reports') }}" class="quick-card">
+                <div class="qc-icon" style="background:rgba(16,185,129,0.12);color:var(--green);">
+                    <i class="fa fa-chart-bar"></i>
+                </div>
+                <div class="qc-body">
+                    <div class="qc-title">Reports</div>
+                    <div class="qc-sub">Income &amp; ...</div>
+                </div>
+                <i class="fa fa-chevron-right qc-arrow"></i>
+            </a>
+        @endif
     </div>
+
+    {{-- Overview section --}}
+    <div class="section-label">Overview</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 20px;">
+
+        {{-- Total Referrals --}}
+        <div class="app-card app-card-inner" style="position:relative;">
+            <div class="list-icon teal"
+                style="margin-bottom:10px; width:36px;height:36px;border-radius:10px;font-size:16px;">
+                <i class="fa fa-users"></i>
+            </div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:4px;">Total Referrals</p>
+            <p style="font-size:22px;font-weight:800;">{{ $totalReferrals }}</p>
+            <p style="font-size:11px;color:var(--muted);margin-top:2px;">{{ $activeReferrals }} active</p>
+        </div>
+
+        {{-- Referral Earnings --}}
+        <div class="app-card app-card-inner">
+            <div class="list-icon gold"
+                style="margin-bottom:10px; width:36px;height:36px;border-radius:10px;font-size:16px;">
+                <i class="fa fa-coins"></i>
+            </div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:4px;">Referral Earn...</p>
+            <p style="font-size:22px;font-weight:800;">{{ number_format($referralEarnings, 2) }}</p>
+            <p style="font-size:11px;color:var(--muted);margin-top:2px;">SVRS coins ea...</p>
+        </div>
+
+        {{-- Gold Coins --}}
+        <div class="app-card app-card-inner">
+            <div
+                style="width:36px;height:36px;border-radius:10px;background:rgba(240,165,0,0.12);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px;">
+                ⭐
+            </div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:4px;">Gold Coins</p>
+            <p style="font-size:22px;font-weight:800;color:var(--gold);">{{ number_format($goldWallet->balance ?? 0) }}
+                <span style="font-size:14px;font-weight:600;">G</span></p>
+            <p style="font-size:11px;color:var(--muted);margin-top:2px;">≈
+                ₹{{ number_format(($goldWallet->balance ?? 0) / 10, 2) }}</p>
+        </div>
+
+        {{-- Wallet Balance --}}
+        <a href="{{ route('member.my.wallet') }}" class="app-card app-card-inner" style="text-decoration:none;">
+            <div class="list-icon teal"
+                style="margin-bottom:10px;width:36px;height:36px;border-radius:10px;font-size:16px;background:rgba(0,212,170,0.12);">
+                <i class="fa fa-wallet"></i>
+            </div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:4px;">Wallet Balan...</p>
+            <p style="font-size:20px;font-weight:800;color:var(--accent);">₹{{ number_format($wallet->balance ?? 0, 2) }}
+            </p>
+            <p style="font-size:11px;color:var(--accent);margin-top:4px;">Tap to man... <i class="fa fa-chevron-right"
+                    style="font-size:9px;"></i></p>
+        </a>
+    </div>
+
+    {{-- Milestone Progress (refer members only) --}}
+    @if($user->is_refer_member)
+        <div class="section-label">Milestone Progress</div>
+        <div style="padding:0 20px; display:flex; flex-direction:column; gap:12px;">
+            @php
+                $milestones = [
+                    ['name' => 'First Reward', 'need' => 10, 'coins' => 10000],
+                    ['name' => 'Option A', 'need' => 15, 'coins' => 5000],
+                    ['name' => 'Option B', 'need' => 20, 'coins' => 10000],
+                ];
+            @endphp
+            @foreach($milestones as $m)
+                @php $pct = min(100, ($activeReferrals / $m['need']) * 100); @endphp
+                <div class="milestone-card {{ $pct >= 100 ? 'completed' : '' }}">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                        <div>
+                            <p style="font-size:14px;font-weight:700;">{{ $m['name'] }}</p>
+                            <p style="font-size:12px;color:var(--muted);">{{ number_format($m['coins']) }} G-Coins on
+                                {{ $m['need'] }} referrals</p>
+                        </div>
+                        @if($pct >= 100)
+                            <div class="badge-app badge-green"><i class="fa fa-check"
+                                    style="margin-right:4px;font-size:10px;"></i>Eligible</div>
+                        @endif
+                    </div>
+                    <div class="progress-app">
+                        <div class="progress-fill {{ $pct >= 100 ? 'green' : '' }}" style="width:{{ $pct }}%;"></div>
+                    </div>
+                    <p style="font-size:12px;color:var(--muted);margin-top:6px;">{{ $activeReferrals }} / {{ $m['need'] }}</p>
+                </div>
+            @endforeach
+
+            <a href="{{ route('member.my.rewards') }}" class="btn-app btn-gold" style="margin-top:4px;">
+                <i class="fa fa-trophy"></i> View All Milestones &amp; Claim
+            </a>
+        </div>
+    @endif
+
+    {{-- Bottom spacer --}}
+    <div style="height:8px;"></div>
+
 @endsection

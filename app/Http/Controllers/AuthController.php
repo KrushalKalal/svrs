@@ -15,7 +15,7 @@ class AuthController extends Controller
     public function signupForm(Request $request)
     {
         $contact = ContactSetting::first();
-        $depositsetting = DepositSetting::first();
+        // $depositsetting = DepositSetting::first();
 
         $refCode = $request->get('ref'); // member_code of sponsor
         $sponsor = null;
@@ -27,7 +27,7 @@ class AuthController extends Controller
                 ->first();
         }
 
-        return view('front.signup', compact('contact', 'depositsetting', 'sponsor', 'refCode'));
+        return view('front.signup', compact('contact', 'sponsor', 'refCode'));
     }
 
     public function checkSponsor(Request $request)
@@ -71,8 +71,8 @@ class AuthController extends Controller
             'email' => 'required|email|unique:users,email',
             'mobile' => 'required|digits:10|unique:users,mobile',
             'password' => 'required|min:6|confirmed',
-            'attachment' => 'required|file|mimes:jpg,jpeg,png|max:2048',
-            'amount' => 'required|numeric|min:' . $deposit->min_amount . '|max:' . $deposit->max_amount,
+            // 'attachment' => 'required|file|mimes:jpg,jpeg,png|max:2048',
+            // 'amount' => 'required|numeric|min:' . $deposit->min_amount . '|max:' . $deposit->max_amount,
         ];
 
         if ($isReferral) {
@@ -90,30 +90,32 @@ class AuthController extends Controller
             ];
         }
 
-        $validator = Validator::make($request->all(), $rules, [
-            'amount.min' => 'Minimum deposit is ₹' . $deposit->min_amount,
-            'amount.max' => 'Maximum deposit is ₹' . $deposit->max_amount,
-        ]);
+        // $validator = Validator::make($request->all(), $rules, [
+        //     'amount.min' => 'Minimum deposit is ₹' . $deposit->min_amount,
+        //     'amount.max' => 'Maximum deposit is ₹' . $deposit->max_amount,
+        // ]);
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $lastCandle = CoinChart::latest()->first();
-        if (!$lastCandle) {
-            return response()->json([
-                'message' => 'Coin price not available. Try again later.'
-            ], 500);
-        }
+        // $lastCandle = CoinChart::latest()->first();
+        // if (!$lastCandle) {
+        //     return response()->json([
+        //         'message' => 'Coin price not available. Try again later.'
+        //     ], 500);
+        // }
 
-        $filePath = null;
-        if ($request->hasFile('attachment')) {
-            $file = $request->file('attachment');
-            $filename = time() . '.' . $file->getClientOriginalExtension();
-            $path = 'uploads/attachment/';
-            $file->move(public_path($path), $filename);
-            $filePath = $path . $filename;
-        }
+        // $filePath = null;
+        // if ($request->hasFile('attachment')) {
+        //     $file = $request->file('attachment');
+        //     $filename = time() . '.' . $file->getClientOriginalExtension();
+        //     $path = 'uploads/attachment/';
+        //     $file->move(public_path($path), $filename);
+        //     $filePath = $path . $filename;
+        // }
 
         // Generate unique SVRS member_code
         do {
@@ -129,9 +131,9 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
             'sponsor_id' => $request->sponsor_id ?? null,
             'role' => 'member',
-            'amount' => $request->amount,
-            'coin_price' => $lastCandle->close_price,
-            'attachment' => $filePath,
+            'amount' => 0,
+            'coin_price' => 0,
+            'attachment' => null,
             'otp' => rand(111111, 999999),
             'status' => 2,
             'is_refer_member' => 0,

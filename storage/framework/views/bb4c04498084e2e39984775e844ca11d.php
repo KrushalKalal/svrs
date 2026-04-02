@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('title', config('app.name') . ' || Profile'); ?>
 
 <?php

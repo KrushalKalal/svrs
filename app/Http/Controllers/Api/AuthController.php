@@ -127,8 +127,8 @@ class AuthController extends Controller
             'email' => 'required|email|unique:users,email',
             'mobile' => 'required|digits:10|unique:users,mobile',
             'password' => 'required|min:6|confirmed',
-            'attachment' => 'required|file|mimes:jpg,jpeg,png|max:2048',
-            'amount' => 'required|numeric|min:' . ($deposit->min_amount ?? 200) . '|max:' . ($deposit->max_amount ?? 2000),
+            // 'attachment' => 'required|file|mimes:jpg,jpeg,png|max:2048',
+            // 'amount' => 'required|numeric|min:' . ($deposit->min_amount ?? 200) . '|max:' . ($deposit->max_amount ?? 2000),
         ];
 
         // Validate sponsor only if provided
@@ -147,28 +147,30 @@ class AuthController extends Controller
             ];
         }
 
-        $validator = Validator::make($request->all(), $rules, [
-            'amount.min' => 'Minimum deposit is ₹' . ($deposit->min_amount ?? 200),
-            'amount.max' => 'Maximum deposit is ₹' . ($deposit->max_amount ?? 2000),
-        ]);
+        // $validator = Validator::make($request->all(), $rules, [
+        //     'amount.min' => 'Minimum deposit is ₹' . ($deposit->min_amount ?? 200),
+        //     'amount.max' => 'Maximum deposit is ₹' . ($deposit->max_amount ?? 2000),
+        // ]);
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
         }
 
-        $lastCandle = CoinChart::latest()->first();
-        if (!$lastCandle) {
-            return response()->json(['status' => false, 'message' => 'Coin price not available.'], 500);
-        }
+        // $lastCandle = CoinChart::latest()->first();
+        // if (!$lastCandle) {
+        //     return response()->json(['status' => false, 'message' => 'Coin price not available.'], 500);
+        // }
 
-        $filePath = null;
-        if ($request->hasFile('attachment')) {
-            $file = $request->file('attachment');
-            $filename = time() . '.' . $file->getClientOriginalExtension();
-            $path = 'uploads/attachment/';
-            $file->move(public_path($path), $filename);
-            $filePath = $path . $filename;
-        }
+        // $filePath = null;
+        // if ($request->hasFile('attachment')) {
+        //     $file = $request->file('attachment');
+        //     $filename = time() . '.' . $file->getClientOriginalExtension();
+        //     $path = 'uploads/attachment/';
+        //     $file->move(public_path($path), $filename);
+        //     $filePath = $path . $filename;
+        // }
 
         do {
             $memberCode = 'SVRS' . rand(100000, 999999);
@@ -183,9 +185,9 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
             'sponsor_id' => $request->sponsor_id ?? null,
             'role' => 'member',
-            'amount' => $request->amount,
-            'coin_price' => $lastCandle->close_price,
-            'attachment' => $filePath,
+            'amount' => 0,
+            'coin_price' => 0,  
+            'attachment' => null,
             'status' => 2,
             'is_refer_member' => 0,
         ]);

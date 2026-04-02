@@ -212,9 +212,19 @@ class AuthController extends Controller
     public function profile()
     {
         $bankdetail = BankDetail::where('user_id', auth()->user()->id)->first();
+
+        if (auth()->user()->role === 'member') {
+            $tab = request('tab');
+            // If a tab param is present, show the inner tabs page
+            if (in_array($tab, ['account', 'edit', 'bank', 'password'])) {
+                return view('member.profile_tabs', compact('bankdetail'));
+            }
+            // Otherwise show the hub (links list)
+            return view('member.profile', compact('bankdetail'));
+        }
+
         return view('admin.auth.profile', compact('bankdetail'));
     }
-
     public function profile_update(Request $request)
     {
         $user = User::findOrFail(auth()->user()->id);
